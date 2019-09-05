@@ -1,4 +1,7 @@
 class Utils:
+    maxLength = 16
+    isHardCode = False
+    sLenght = 0
     def regexMap(self, s):
         isHardCode = False
         endOfString = False
@@ -16,6 +19,7 @@ class Utils:
             filter, rep = self.repetitionsAndFilter(currentFilter, filter, isHardCode, rep)
             filter, hc, isHardCode, rep = self.saveFilter(currentFilter, endOfString, filter, filters, hc, isFilter,isHardCode, l, rep, s, savefilter)
 
+        self.sLenght = len(s)
         return filters
 
     def saveFilter(self, currentFilter, endOfString, filter, filters, hc, isFilter, isHardCode, l, rep, s, savefilter):
@@ -60,18 +64,45 @@ class Utils:
         else:
             hc = hc + n
             isHardCode = True
+            self.isHardCode = True
         return currentFilter, hc, isFilter, isHardCode, savefilter
 
     def savingFilter(self, filter, filters, hc, rep):
         f = {'filter': filter, 'repetitions': rep, 'hc': hc}
         filters.append(f)
 
-    def regexString(self, m):
+    def regexString(self, m, forced):
         regex = ''
-        for f in m:
-            if f['repetitions'] > 0:
-                regex = regex + f['filter'] + '{' + str(f['repetitions']) + '}' + f['hc']
-            else:
-                regex = regex + f['filter'] + f['hc']
+        if not forced and (self.sLenght > self.maxLength or not self.isHardCode and len(m) > 2): #:self.sLenght/2:
+            regex = '.*'
+        elif not forced and self.isHardCode == True:
+            groups = 0
+            tempregex = ''
+            fCount = 0
+            for f in m:
+                fCount = fCount + 1
+                if 0 < f['repetitions']:
+                    groups = groups + 1
+                    if groups > 2:
+                       tempregex = '.*' + f['hc']
+                    else:
+                        tempregex = tempregex + f['filter'] + '{' + str(f['repetitions']) + '}' + f['hc']
+
+                    if f['hc'] != '' or fCount == len(m):
+                        groups = 0
+                        regex = regex + tempregex
+                        tempregex = ''
+
+                else:
+                    regex = regex + f['filter'] + f['hc']
+        else:
+            for f in m:
+                if 0 < f['repetitions']:
+                    regex = regex + f['filter'] + '{' + str(f['repetitions']) + '}' + f['hc']
+                #elif f['repetitions'] >= self.maxLength:
+                #    regex = regex + f['filter'] + '*' + f['hc']
+                else:
+                    regex = regex + f['filter'] + f['hc']
+
 
         return regex
