@@ -2,107 +2,197 @@ class Utils:
     maxLength = 16
     isHardCode = False
     sLenght = 0
-    def regexMap(self, s):
-        isHardCode = False
-        endOfString = False
-        filter = ''
-        hc = ''
-        currentFilter = ''
 
+    def hardcoded(self, s):
+        self.isHardCode = False
+        for n in s:
+            if not self.isHardCode and ('a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9'):
+                self.isHardCode = False
+            else:
+                self.isHardCode = True
+
+    def regexStructure(self, s):
+        temp = ''
+        hc = ''
+        filters = []
+        self.hardcoded(s)
+        ishc = self.isHardCode
+        l=0
+        if  ishc == True:
+            for n in s:
+                l = l + 1
+                if l == len(s) or not('a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9') and hc == '':
+                    if l == len(s) and 'a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9':
+                        temp = temp + n
+                    filters.append(self.singleGroupStructure(temp))
+                    temp = ''
+                    hc = n
+                elif hc != '' and not('a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9'):
+                    hc = hc + n
+                elif hc != '' and (l == len(s) or ('a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9')):
+                    filters.append({'hc': hc})
+                    hc = ''
+                    temp = temp + n
+                else:
+                    temp = temp + n
+        else:
+            filters.append(self.singleGroupStructure(s))
+
+        return filters
+
+    def singleGroupStructure(self, s):
+        filter = ''
+        currentFilter = ''
         rep = 0
         l = 0
         filters = []
 
         for n in s:
             l = l + 1
-            currentFilter, hc, isFilter, isHardCode, savefilter = self.filterOrHardcode(currentFilter, hc, isHardCode,n)
-            filter, rep = self.repetitionsAndFilter(currentFilter, filter, isHardCode, rep)
-            filter, hc, isHardCode, rep = self.saveFilter(currentFilter, endOfString, filter, filters, hc, isFilter,isHardCode, l, rep, s, savefilter)
-
-        self.sLenght = len(s)
-        return filters
-
-    def saveFilter(self, currentFilter, endOfString, filter, filters, hc, isFilter, isHardCode, l, rep, s, savefilter):
-        # se sono alla fine devo storare
-        if l == len(s):
-            endOfString = True
-        # se ho un filtro e il nuovo è diverso salvo il filtro
-        if filter != currentFilter or isHardCode == True and isFilter == True:
-            savefilter = True
-        if savefilter == True:
-            self.savingFilter(filter, filters, hc, rep)
-            filter = currentFilter
-            rep = 1
-            hc = ''
-            isHardCode = False
-        if endOfString == True:
-            self.savingFilter(currentFilter, filters, hc, rep)
-            filter = ''
-        return filter, hc, isHardCode, rep
-
-    def repetitionsAndFilter(self, currentFilter, filter, isHardCode, rep):
-        if not isHardCode:
+            if 'a' <= n <= 'z':
+                currentFilter = 'a-z'
+            elif 'A' <= n <= 'Z':
+                currentFilter = 'A-Z'
+            elif '0' <= n <= '9':
+                currentFilter = '0-9'
             if filter == '':
                 filter = currentFilter
-            # se trovo un filtro ed è lo stesso di prima allora incremento il contatore
             if filter == currentFilter:
                 rep = rep + 1
-        return filter, rep
 
-    def filterOrHardcode(self, currentFilter, hc, isHardCode, n):
-        isFilter = False
-        savefilter = False
-        if 'a' <= n <= 'z':
-            currentFilter = '[a-z]'
-            isFilter = True
-        elif 'A' <= n <= 'Z':
-            currentFilter = '[A-Z]'
-            isFilter = True
-        elif '0' <= n <= '9':
-            currentFilter = '[0-9]'
-            isFilter = True
-        else:
-            hc = hc + n
-            isHardCode = True
-            self.isHardCode = True
-        return currentFilter, hc, isFilter, isHardCode, savefilter
+            f = {'filter': filter, 'repetitions': rep}
 
-    def savingFilter(self, filter, filters, hc, rep):
-        f = {'filter': filter, 'repetitions': rep, 'hc': hc}
-        filters.append(f)
+            if filter != currentFilter:
+                filters.append(f)
+                filter = currentFilter
+                rep = 1
 
-    def regexString(self, m, forced):
+            if l == len(s):
+                filters.append(f)
+
+        #self.sLenght = len(s)
+        struct = {'s':s,'l':len(s),'filters':filters}
+        return struct
+        #return filters
+
+
+    def regex(self, s):
+        regex =''
+        #if self.isHardCode == True:
+        for m in s:
+            regex = regex + self.regexString(m)
+        """else:
+            m = s
+            regex = self.regexString(m)"""
+        return regex
+
+    #get the regex from the list of filters
+    def regexString(self, m):
         regex = ''
-        if not forced and (self.sLenght > self.maxLength or not self.isHardCode and len(m) > 2): #:self.sLenght/2:
-            regex = '.*'
-        elif not forced and self.isHardCode == True:
-            groups = 0
-            tempregex = ''
-            fCount = 0
-            for f in m:
-                fCount = fCount + 1
-                if 0 < f['repetitions']:
-                    groups = groups + 1
-                    if groups > 2:
-                       tempregex = '.*' + f['hc']
+
+        if 's' in m:
+            s = m['s']
+            sLenght =  m['l']
+            filters = m['filters']
+            if (sLenght > self.maxLength or len(filters) > sLenght/2):
+                regex = '.*'
+            else :
+                for f in filters:
+                    if 1 < f['repetitions']:
+                        regex = regex + '[' + f['filter'] +']' +'{' + str(f['repetitions']) + '}'
                     else:
-                        tempregex = tempregex + f['filter'] + '{' + str(f['repetitions']) + '}' + f['hc']
+                        regex = regex + '[' + f['filter'] +']'
 
-                    if f['hc'] != '' or fCount == len(m):
-                        groups = 0
-                        regex = regex + tempregex
-                        tempregex = ''
+        if 'hc' in m:
+            regex = regex + m['hc']
+        return regex
 
-                else:
-                    regex = regex + f['filter'] + f['hc']
+    def merge(self,struct1,struct2):
+        regex =''
+        l = 0
+        if len(struct1) < len(struct2):
+            l = len(struct1)
         else:
-            for f in m:
-                if 0 < f['repetitions']:
-                    regex = regex + f['filter'] + '{' + str(f['repetitions']) + '}' + f['hc']
-                #elif f['repetitions'] >= self.maxLength:
-                #    regex = regex + f['filter'] + '*' + f['hc']
-                else:
-                    regex = regex + f['filter'] + f['hc']
+            l = len(struct2)
 
+        for i in range(l):
+            groups = 0
+            m1 = struct1[i]
+            m2 = struct2[i]
+            s1 = self.regexString(m1)
+            s2 = self.regexString(m2)
+
+            if s1 == '.*' or s2 == '.*':
+                regex = regex + '.*'
+            elif s1 == s2:
+                regex = regex + s1
+                groups = groups + 1
+            else:
+                if len(m1['s']) > len(m2['s']):
+                    sl = len(m1['s'])
+                else:
+                    sl = len(m2['s'])
+
+                filters1 = m1['filters']
+                filters2 = m2['filters']
+                if len(filters1) < len(filters2):
+                    lf = len(filters1)
+                    diffFilters = len(filters2) - lf
+                    longest= filters2
+                else:
+                    lf = len(filters2)
+                    diffFilters = len(filters1) - lf
+                    longest= filters1
+
+                offset = 0
+                tempregex = ''
+                for j in range(lf):
+                    offset = offset + 1
+                    g1 = filters1[j]
+                    g2 = filters2[j]
+                    f1 = g1['filter']
+                    f2 = g2['filter']
+                    r1 = g1['repetitions']
+                    r2 = g2['repetitions']
+                    if r1 < r2:
+                        min = r1
+                        diff = r2 - r1
+                        follow =  '[' + f2 + ']'
+                    else:
+                        min = r2
+                        diff = r1 - r2
+                        follow =  '[' + f1 + ']'
+                        #regex + f['filter'] + '{' + str(f['repetitions']) + '}'
+                    if f1 != f2:
+                        filter = '[' + f1 + f2 + ']'
+                    else:
+                        filter = '[' + f1 + ']'
+
+                    if diff > 0:
+                        tempregex = tempregex + filter + '{' + str(min) + '}' + '(' + follow + '{' + str(diff) + '}' +')?'
+                        groups = groups + 2
+                    else:
+                        tempregex = tempregex + filter + '{' + str(min) + '}'
+                        groups = groups + 1
+
+                for k in range(diffFilters):
+                    g = longest[j+offset]
+                    f = g['filter']
+                    r = g['repetitions']
+                    filter = '[' + f + ']'
+                    tempregex = tempregex + filter + '{' + str(r) + '}'
+                    groups = groups + 1
+
+                #regex = regex + '[' + s1 + s2 + ']'
+                print(sl/2)
+                print(groups)
+                if groups > sl/2:
+                    regex = regex + '.*'
+                else:
+                    regex = regex + tempregex
 
         return regex
+
+
+
+

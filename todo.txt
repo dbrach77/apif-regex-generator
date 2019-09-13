@@ -1,34 +1,119 @@
-perché bisogna pensare a come ampliarla in caso di merge
-per esempio, se io queste due stringhe:
-ciccio2425pasticcio2825
-gino23pino25
-e ne produco una regex per ognuna. e poi devo fonderle
-dovrei avere questo:
-[a-z]{4,6}[0-9]{2,4}[a-z]{4,9}[0-9]{2,4}
-allora probabilmente la cosa più semplice è creare prima un parser ad albero che è in grado di digerire le regole che vuoi usare.
-prendiamo per esempio l'ultima regex, il parser dovrebbe creare un array così:
-[
-  {
-    "filter":"[a-z]",
-    "min_occurrencies":4,
-    "max_occurrencies":6,
-   },
-   {
-    "filter":"[0-9]",
-    "min_occurrencies":2,
-    "max_occurrencies":4
-   }
-]
-e così via
-e così via
-in questo modo, quando incontri due regex, puoi fonderle comparando oggetto per oggetto
-e poi questa classe aggiungi uno "stringhificatore" che ti ritorna la regex
-a questo punto direi che vale la pena che tu guardi come fare una classe in python
-perché in effetti ti servirà
-ma del merge parliamo dopo
-quindi, pensiamo alle regole
-troviamo:
-elementi di testo  a-z A-Z anche misti
-elementi di numeri
-i caratteri speciali vengono semplicemente hardcodati
-ok?
+mi servono 2 algoritmi:
+1) un algoritmo che, data una stringa, produca la miglior regex possibile che ne rappresenti il pattern
+2) un algoritmo che, dati 2 regex, le "fonda" in una regex che sia in grado di rappresentare entrambe le cose contemporaneamente
+
+
+stavo pensando alla fusione delle reg ex. vanno fuse solo quelle simili?
+ad esempio [a-z]{2}[0-9]{4} con [a-z]{4}[0-9]{12} e ottenre
+[a-z]{2,4}[0-9]{4,12}?
+o anche cose come [a-z]{2} con [0-9]{4} e ottenere [a-z]{2}[0-9]{4}?
+
+piu lunga di tot sempre    .*
+valutazione sulla sua complessità regex
+esempio
+a12bc32ff112b -> [a-z]{1}[0-9]{2}[a-z]{2}[0-9]{2}[a-z]{2}[0-9]{3}[a-z]{1}
+secondo me se il numero dei gruppi è più della meta del numero dei caratteri
+e i gruppi sono più di 2
+abbiamo una complessità assurda
+
+
+
+https://stackoverflow.com/questions/4947561/can-i-combine-2-regex-with-a-logic-or/4947685
+https://stackoverflow.com/questions/869809/combine-regexp
+https://github.com/spadgos/regex-combiner
+
+Regola 1:
+se uno dei due è .*, allora è evidentemente .*
+Regola 2:
+se posizionalmente abbiamo un overlap, lo possiamo trattare così.
+Ammettiamo di avere:
+[a-z]{3}[A-Z]{3}
+e
+[1-3]{2}[A-Z]{3}
+questo diventerebbe:
+[a-z1-3]{2}[a-z]{1}[A-Z]{3}
+FERMO RESTANDO che rimane la questione della complessità.
+Se la complessità risultante è troppo alta, allora si abbandona come si diceva prima)
+quindi se finiamo con avere un'esplosione combinatoria di sezioni, allora si abbandona, come si faceva per la singola regex
+SE ho una sezione (separata da carattere speciale), allora tratto le sezioni singolarmente. Quindi valgono le regole di complessive, ma nel piccolo
+quindi se ho:
+a12-b31-c7
+e
+1b3-c1z-71
+le relative regex quando si fondono diventeranno molto semplici
+
+Esempio:
+carte di credito:
+5000-1111-4444--5555
+la carta di credito è semplice perché è sempre lunga uguale sia in relazione ad ogni singolo segmento, ma anche in totale.
+Comunque sono 4 gruppi di 4 cifre
+giusto?
+ya
+ma ecco un pattern in cui le lunghezze sono relative. gli indirizzi IP.
+127.0.0.1
+192.168.11.3
+sono sempre quattro blocchi da 1 a 3 caratteri
+ora, se non hai separatori di nessuna sorta, è IMPOSSIBILE secondo me che due stringhe condividano un pattern, se sono di lunghezze diverse
+ossia:
+abc123tzy
+e
+zzz11
+non sono in relazione tra di loro
+giusto
+non cerchiamo neanche di fondere i pattern, è una perdita di tempo
+quindi diremo [a-z][0-9]*
+e amen
+altra questione è quando c'è un separatore
+è più probabile che ci sia uno schema da qualche parte
+dammi 1 minuto che devo fare una cosa e poi ci ragioniamo ancora
+quindi potrebbe essere. da due stringhe in ingresso ottenere le due regex; capire se sono simili. se si fonderle. per capire se sono simili possiamo vedere se hanno lunghezza simile e se sono strutturare in modo simile.
+sì. allora, pensiamo proceduralmente.
+generi una regex per per due stringhe.
+Ovviamente se la stringa è molto lunga, come si diceva, è probabilmente una descrizione, e quindi .*
+Poi avvii la funsione.
+SE ci sono dei separatori, allora si analizzano singolaramente, se non ci sono separatori, si analizza come una sola
+bisogna capire in base a cosa dire che due regex sono simili e quindi fonderle. esempio numeri ip. potrei avere [0-9]{1}.[0-9]{1}.[0-9]{1}.[0-9]{1} e [0-9]{3}.[0-9]{3}.[0-9]{3}.[0-9]{1}.[0-9]{3}  che la mia procedure deve dire sono simili e propormi la fusione. al contrario [a-z]{10} e [a-z]{10}[0-9]{1} potrei dire che non sono simili e mettere .*   corretto ?
+se sono maggiori di tot (default 16) butto sempre .*  Se una delle due è .* è sempre .*
+ok, allora similitudini
+lavoriamo in logica inversa.
+Invece di IMMAGINARE cose, prova a prendere dei pattern reali e vedere come funziona
+è inutile inventare il più fichissimo algoritmo di sempre quando verrà sfruttato solo raramente
+allora:
+per esempio
+1) le carte di credito sono sempre sempre consistenti. 4 blocchi di 4 cifre
+[0-9]{3} [0-9]{3} [0-9]{3} [0-9]{3}
+2) gli indirizzi IP sono 4 blocchi in cui i blocchi sono da 1 a 3 cifre
+[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}
+3) il codice fiscale?
+cognome e nome 6 lettere    [A-Z]{6}
+anno di nascita 2 cifre     [0-9]{2}
+mese 1 lettera              [A-Z]
+giorno e sesso 2 cire       [0-9]{2}
+comune/stato 4 alfanumerici [A-Z][0-9]{3}
+checksum 1 lettera          [A-Z]
+
+4) l'ISBN?
+prefix 978 o 979                    [0-9]{3} oppure (978|979)
+registration group da 1 a 5 cifre   [0-9]{1,5}
+registration element da 1 a 7 cifre [0-9]{1,7}
+publication element da 1 a 6 cifre  [0-9]{1,6}
+check                               [0-9]{1}
+
+5) l'SSN [0-9]{3}-[0-9]{2}-[0-9]{4}
+dalle loro variazioni interne, puoi capire quali sono le aspettative di compatibilità
+
+6) UUIDD
+ma un UUID di Java?
+un UUID di Posgres?
+un OID di MongoDB? (ad esempio:
+5d77ae228ffa590168f19858
+5d77ae248ffa590168f1985d)
+per esempio, un UUID di MongoDB è una serie di esadecimali
+non ci puoi trovare un pattern
+ma ora sappiamo che sono più di 16 caratteri. quindi la nostra regola del 16 va a farsi benedire. diciamo 32 allora
+e cosa succede a un OID MongoDB allora?
+probabilmente [0-9a-z]{chiapilu}
+qui è un lavoro di intelletto abbastanza raffinato
+si il oid sarebbe abbastanza complesso da beccare....anzi probabilmente impossibile. ha una varianza elevata
+esatto! ed è la tua cartina tornasole
+
