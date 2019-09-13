@@ -24,26 +24,6 @@ def regexForced(s):
 util = utils.Utils()
 util.maxLength = 36
 
-s1 = 'aaa-11-aa'
-print(s1)
-regexMap1 = util.regexStructure(s1)
-print(regexMap1)
-regexString1 = util.regex(regexMap1)
-print(regexString1)
-#p = re.compile(regexString1)
-#m = p.match(s1)
-#print(m)
-
-s2 = 'aaa-11aa-aa'
-print(s2)
-regexMap2 = util.regexStructure(s2)
-print(regexMap2)
-regexString2 = util.regex(regexMap2)
-print(regexString2)
-
-merged = util.merge(regexMap1,regexMap2)
-print(merged)
-
 #p = re.compile(regexString2)
 #m = p.match(s2)
 #print(m)
@@ -54,49 +34,46 @@ print(merged)
 
 
 """
-s1 = '1.1.1.2'
+s1 = '1.1.1.1'
 s2 = '111.111.111.111'
-"""
+#"""
 
 """
 s1 = 'SBHLDB46L22H330P'
 s2 = 'LKVVGL75M43C783A'
-"""
+#"""
 
 """
 s1 = 'SBHLDB46L22H330P'
 s2 = 'LKVVGL75M43C783A'
-"""
+#"""
 
-"""
+#"""
 s1 = '2857ef18-d549-11e9-bb65-2a2ae2dbcce4'
 s2 = '2857f3f0-d549-11e9-bb65-2a2ae2dbcce4'
+#"""
 
+"""
+s1 = 'aaa123'
+s2 = 'aaa'
+"""
 
 print(s1)
+regexMap1 = util.regexStructure(s1)
+print(regexMap1)
+regexString1 = util.regex(regexMap1)
+print(regexString1)
+
 print(s2)
+regexMap2 = util.regexStructure(s2)
+print(regexMap2)
+regexString2 = util.regex(regexMap2)
+print(regexString2)
 
-util = utils.Utils()
-util.maxLength = 36
-regexMap1 = util.regexMap(s1)
-regex1, newmap1 = util.regexString(regexMap1)
-regexMap2 = util.regexMap(s2)
-regex2, newmap2 = util.regexString(regexMap2)
-print(str(util.isHardCode))
-print("********")
-print(regex1)
-print(newmap1)
-print(regex2)
-print(newmap2)
-if util.isHardCode == True:
-    fusion = util.mergeHardCodedRegex(regex1,regex2,regexMap1,regexMap2)
-else:
-    fusion = util.mergeHardCodedRegex(regex1,regex2,regexMap1,regexMap2)
-print("********")
-print(fusion)
+merged = util.merge(regexMap1,regexMap2)
+print('**************')
+print(merged)
 
-
-print("********")"""
 #regex1f = util.regexStringForced(regexMap1)
 #regex2f = util.regexStringForced(regexMap2)
 #print(regex1f)

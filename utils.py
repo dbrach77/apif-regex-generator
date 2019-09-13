@@ -22,6 +22,8 @@ class Utils:
             for n in s:
                 l = l + 1
                 if l == len(s) or not('a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9') and hc == '':
+                    if l == len(s) and hc != '':
+                        filters.append({'hc': hc})
                     if l == len(s) and 'a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9':
                         temp = temp + n
                     filters.append(self.singleGroupStructure(temp))
@@ -94,7 +96,7 @@ class Utils:
             s = m['s']
             sLenght =  m['l']
             filters = m['filters']
-            if (sLenght > self.maxLength or len(filters) > sLenght/2):
+            if (sLenght > self.maxLength or (sLenght > 1 and len(filters) > sLenght/2)):
                 regex = '.*'
             else :
                 for f in filters:
@@ -112,10 +114,16 @@ class Utils:
         l = 0
         if len(struct1) < len(struct2):
             l = len(struct1)
+            diffFilters = len(struct2) - l
+            longest = struct2
         else:
             l = len(struct2)
+            diffFilters = len(struct1) - l
+            longest = struct1
 
+        offset = 0
         for i in range(l):
+            offset = offset + 1
             groups = 0
             m1 = struct1[i]
             m2 = struct2[i]
@@ -128,69 +136,75 @@ class Utils:
                 regex = regex + s1
                 groups = groups + 1
             else:
-                if len(m1['s']) > len(m2['s']):
-                    sl = len(m1['s'])
-                else:
-                    sl = len(m2['s'])
+                regex = self.mergeGroup(groups, m1, m2, regex)
 
-                filters1 = m1['filters']
-                filters2 = m2['filters']
-                if len(filters1) < len(filters2):
-                    lf = len(filters1)
-                    diffFilters = len(filters2) - lf
-                    longest= filters2
-                else:
-                    lf = len(filters2)
-                    diffFilters = len(filters1) - lf
-                    longest= filters1
+        for j in range(diffFilters):
+            m = longest[j+offset]
+            s = self.regexString(m)
+            regex = regex + s1
 
-                offset = 0
-                tempregex = ''
-                for j in range(lf):
-                    offset = offset + 1
-                    g1 = filters1[j]
-                    g2 = filters2[j]
-                    f1 = g1['filter']
-                    f2 = g2['filter']
-                    r1 = g1['repetitions']
-                    r2 = g2['repetitions']
-                    if r1 < r2:
-                        min = r1
-                        diff = r2 - r1
-                        follow =  '[' + f2 + ']'
-                    else:
-                        min = r2
-                        diff = r1 - r2
-                        follow =  '[' + f1 + ']'
-                        #regex + f['filter'] + '{' + str(f['repetitions']) + '}'
-                    if f1 != f2:
-                        filter = '[' + f1 + f2 + ']'
-                    else:
-                        filter = '[' + f1 + ']'
+        return regex
 
-                    if diff > 0:
-                        tempregex = tempregex + filter + '{' + str(min) + '}' + '(' + follow + '{' + str(diff) + '}' +')?'
-                        groups = groups + 2
-                    else:
-                        tempregex = tempregex + filter + '{' + str(min) + '}'
-                        groups = groups + 1
+    def mergeGroup(self, groups, m1, m2, regex):
+        if len(m1['s']) > len(m2['s']):
+            sl = len(m1['s'])
+        else:
+            sl = len(m2['s'])
+        filters1 = m1['filters']
+        filters2 = m2['filters']
+        if len(filters1) < len(filters2):
+            lf = len(filters1)
+            diffFilters = len(filters2) - lf
+            longest = filters2
+        else:
+            lf = len(filters2)
+            diffFilters = len(filters1) - lf
+            longest = filters1
+        offset = 0
+        tempregex = ''
+        for j in range(lf):
+            offset = offset + 1
+            g1 = filters1[j]
+            g2 = filters2[j]
+            f1 = g1['filter']
+            f2 = g2['filter']
+            r1 = g1['repetitions']
+            r2 = g2['repetitions']
+            if r1 < r2:
+                min = r1
+                diff = r2 - r1
+                follow = '[' + f2 + ']'
+            else:
+                min = r2
+                diff = r1 - r2
+                follow = '[' + f1 + ']'
+            if f1 != f2:
+                filter = '[' + f1 + f2 + ']'
+            else:
+                filter = '[' + f1 + ']'
 
-                for k in range(diffFilters):
-                    g = longest[j+offset]
-                    f = g['filter']
-                    r = g['repetitions']
-                    filter = '[' + f + ']'
-                    tempregex = tempregex + filter + '{' + str(r) + '}'
-                    groups = groups + 1
+            if diff > 0:
+                tempregex = tempregex + filter + '{' + str(min)+','+ str(min+diff) + '}' #+ '(' + follow + '{' + str(diff) + '}' + ')?'
+                groups = groups + 1
+            else:
+                tempregex = tempregex + filter + '{' + str(min) + '}'
+                groups = groups + 1
 
-                #regex = regex + '[' + s1 + s2 + ']'
-                print(sl/2)
-                print(groups)
-                if groups > sl/2:
-                    regex = regex + '.*'
-                else:
-                    regex = regex + tempregex
-
+        for k in range(diffFilters):
+            g = longest[j + offset]
+            f = g['filter']
+            r = g['repetitions']
+            filter = '[' + f + ']'
+            #tempregex = tempregex + '(' + filter + '{' + str(r) + '}' + ')?'
+            tempregex = tempregex + '(' + filter + '{' + str(r) + '}' + ')?'
+            groups = groups + 1
+        # regex = regex + '[' + s1 + s2 + ']'
+        print(sl / 2)
+        print(groups)
+        if groups >  sl / 2:
+            regex = regex + '.*'
+        else:
+            regex = regex + tempregex
         return regex
 
 
