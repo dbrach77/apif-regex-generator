@@ -48,15 +48,21 @@ s1 = 'SBHLDB46L22H330P'
 s2 = 'LKVVGL75M43C783A'
 #"""
 
-#"""
+"""
 s1 = '2857ef18-d549-11e9-bb65-2a2ae2dbcce4'
 s2 = '2857f3f0-d549-11e9-bb65-2a2ae2dbcce4'
 #"""
 
 """
-s1 = 'aaa123'
-s2 = 'aaa'
-"""
+s1 = '5d7b5e00f894261071b552d0'
+s2 = '5d7b5e1a214a01a47eb26c5c'
+#"""
+
+
+#"""
+s1 = 'aaa123aaa'
+s2 = 'aaa123'
+#"""
 
 print(s1)
 regexMap1 = util.regexStructure(s1)
@@ -74,11 +80,9 @@ merged = util.merge(regexMap1,regexMap2)
 print('**************')
 print(merged)
 
-#regex1f = util.regexStringForced(regexMap1)
-#regex2f = util.regexStringForced(regexMap2)
-#print(regex1f)
-#print(regex2f)
-
+p = re.compile(merged)
+print(p.match(s1))
+print(p.match(s2))
 
 
 #p = re.compile('[a-z]{2}([a-z]{1})?[0-9]{3}')

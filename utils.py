@@ -138,10 +138,14 @@ class Utils:
             else:
                 regex = self.mergeGroup(groups, m1, m2, regex)
 
+        tempregex = ''
         for j in range(diffFilters):
             m = longest[j+offset]
             s = self.regexString(m)
-            regex = regex + s1
+            tempregex = tempregex + s
+
+        if tempregex != '':
+            regex = regex+'('+tempregex+')?'
 
         return regex
 
@@ -191,7 +195,7 @@ class Utils:
                 groups = groups + 1
 
         for k in range(diffFilters):
-            g = longest[j + offset]
+            g = longest[k + offset]
             f = g['filter']
             r = g['repetitions']
             filter = '[' + f + ']'
