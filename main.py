@@ -75,35 +75,35 @@ def test():
     s2 = '204-72-7894'
     #"""
 
-    #"""
+    """
     s1 = '014-7a7a-3875'
     s2 = '204-77aa77bb-7894'
     s3 = '014-7a7a-3875'
     #"""
 
-    """
-    s1 = 'a1a1a1a1a1'
-    s2 = 'b2b2b2b2b2'
-    s3 = 'aaa_1234'
+    #"""
+    s1 = 'a1a1'
+    s2 = 'asd123asd123'
+    s3 = 'a1a1'
     s4 = 'aaa_1234'
     #"""
 
     print('************** s1')
     print(s1)
     regexMap1 = util.regexStructure(s1)
-    print(regexMap1)
+    #print(regexMap1)
     regexString1 = util.regex(regexMap1)
     print(regexString1)
 
     print('************** s2')
     print(s2)
     regexMap2 = util.regexStructure(s2)
-    print(regexMap2)
+    #print(regexMap2)
     regexString2 = util.regex(regexMap2)
     print(regexString2)
 
     merged = util.merge(regexMap1, regexMap2)
-    print(merged)
+    #print(merged)
     print(util.regex(merged))
 
 
@@ -125,8 +125,6 @@ def test():
     print(p.match(s2))
     """
 
-
-#test()
 util = utils.Utils()
 util.maxLength = 36
 print(sys.argv[1])
@@ -137,8 +135,8 @@ for i in range(len(lineList)):
     #print('INPUT')
     print(lineList[i])
     inputMap = util.regexStructure(lineList[i])
-    #print(inputMap)
-    print(util.regex(inputMap))
+    print(inputMap)
+    #print(util.regex(inputMap))
     if i == 0:
         mergeMap = inputMap
     else:

@@ -81,15 +81,27 @@ class Utils:
     def regex(self, s):
         regex =''
         i = 0
+        open = False
+        closed = False
+
         for m in s:
             i = i +1
-            if 'optional' in m and not '(' in regex:
+            if open == True and (not 'optional' in m or 'hc' in m) and not i == len(s):
+                regex = regex +')?'
+                open = False
+
+
+
+            if 'optional' in m and not open:
                 regex = regex + '('
+                open = True
 
             regex = regex + self.singleGroupRegex(m)
 
-            if i == len(s) and 'optional' in m and regex!= '.*':# and not 'hc' in m:
+
+            if open == True and i == len(s):
                 regex = regex +')?'
+                open = False
 
         return regex
 
@@ -144,12 +156,23 @@ class Utils:
             if 's' in m1:
                 self.mergeFilters(filters, m1, m2, merge)
 
-            if 'hc' in m1:
+            if 'hc' in m1 and 'hc' in m2:
                 filters = []
-                hc = {'hc': m1['hc']}
-                if 'optional' in m2:
-                    hc['optional'] = True
-                merge.append(hc)
+                hc1 = m1['hc']
+                hc2 = m2['hc']
+
+                if hc1 == hc2:
+                    hardcode = {'hc': m1['hc']}
+                    if 'optional' in m2:
+                        hardcode['optional'] = True
+                    merge.append(hardcode)
+                else:
+                    hardcode = {'hc': m1['hc']}
+                    hardcode['optional'] = True
+                    merge.append(hardcode)
+                    hardcode = {'hc': m2['hc']}
+                    hardcode['optional'] = True
+                    merge.append(hardcode)
 
         for l in range(diffFilters):
             m = longest[l+offset]
@@ -157,79 +180,100 @@ class Utils:
                 m['optional'] = True
                 merge.append(m)
             if 'hc' in m:
-                filters = []
                 merge.append({'hc': m['hc'],'optional': True})
+
         return merge
 
     def mergeFilters(self, filters, m1, m2, merge):
+        s, sl = self.longestString(m1, m2)
+        filtersGroup1 = m1['filters']
+        filtersGroup2 = m2['filters']
+        lengthDifference, minLength, longestStruct = self.longestMinDifference(filtersGroup1, filtersGroup2)
+        offset = 0
+
+        for j in range(minLength):
+            offset = self.mergeSingleGroup(filters, filtersGroup1, filtersGroup2, j, offset)
+
+        for k in range(lengthDifference):
+            group = longestStruct[k + offset]
+            group['optional'] = True
+            filters.append(group)
+
+        struct = {'s': s, 'l': sl, 'filters': filters}
+
+        if 'optional' in m2:
+            struct['optional'] = True
+        merge.append(struct)
+
+    def mergeSingleGroup(self, filters, filtersGroup1, filtersGroup2, j, offset):
+        filter1, filter2, group1, group2, maxRepetitions2, minRepetitions2, offset, repetitions1, repetitions2 = self.initSingleGroupMerge(filtersGroup1, filtersGroup2, j, offset)
+        f = self.mergeFilter(filter1, filter2)
+        maxR, minR, r = self.repetitions(maxRepetitions2, minRepetitions2, repetitions1, repetitions2)
+
+        filter = {'filter': f, 'repetitions': r, 'minR': minR, 'maxR': maxR}
+
+        if 'optional' in group1 or 'optional' in group2:
+            filter['optional'] = True
+        filters.append(filter)
+
+        return offset
+
+    def repetitions(self, maxRepetitions2, minRepetitions2, repetitions1, repetitions2):
+        r = 0
+        minR = 0
+        maxR = 0
+        if (repetitions2 == 0):
+            r = 0
+            if repetitions1 < minRepetitions2:
+                minR = repetitions1
+            else:
+                minR = minRepetitions2
+
+            if repetitions1 > maxRepetitions2:
+                maxR = repetitions1
+            else:
+                maxR = maxRepetitions2
+
+        else:
+            if repetitions1 == repetitions2:
+                r = repetitions1
+            elif repetitions1 < repetitions2:
+                minR = repetitions1
+                maxR = repetitions2
+            else:
+                minR = repetitions2
+                maxR = repetitions1
+        return maxR, minR, r
+
+    def mergeFilter(self, filter1, filter2):
+        if filter1 == filter2:
+            f = filter1
+        elif filter1 in filter2:
+            f = filter2
+        else:
+            f = filter1 + filter2
+        return f
+
+    def initSingleGroupMerge(self, filtersGroup1, filtersGroup2, j, offset):
+        offset = offset + 1
+        group1 = filtersGroup1[j]
+        group2 = filtersGroup2[j]
+        filter1 = group1['filter']
+        filter2 = group2['filter']
+        repetitions1 = group1['repetitions']
+        repetitions2 = group2['repetitions']
+        minRepetitions2 = group2['minR']
+        maxRepetitions2 = group2['maxR']
+        return filter1, filter2, group1, group2, maxRepetitions2, minRepetitions2, offset, repetitions1, repetitions2
+
+    def longestString(self, m1, m2):
         if len(m1['s']) > len(m2['s']):
             sl = len(m1['s'])
             s = m1['s']
         else:
             sl = len(m2['s'])
             s = m2['s']
-        filtersGroup1 = m1['filters']
-        filtersGroup2 = m2['filters']
-        lengthDifference, minLength, longestStruct = self.longestMinDifference(filtersGroup1, filtersGroup2)
-        offsetInner = 0
-        for j in range(minLength):
-            offsetInner = offsetInner + 1
-            g1 = filtersGroup1[j]
-            g2 = filtersGroup2[j]
-            f1 = g1['filter']
-            f2 = g2['filter']
-            r1 = g1['repetitions']
-            r2 = g2['repetitions']
-            minR2 = g2['minR']
-            maxR2 = g2['maxR']
-
-            if f1 == f2:
-                f = f1
-            elif f1 in f2:
-                f = f2
-            else:
-                f = f1 + f2
-
-            r = 0
-            minR = 0
-            maxR = 0
-
-            if (r2 == 0):
-                if r1 < minR2:
-                    minR = r1
-                else:
-                    minR = minR2
-
-                if r1 > maxR2:
-                    maxR = r1
-                else:
-                    maxR = maxR2
-
-            else:
-                if r1 == r2:
-                    r = r1
-                elif r1 < r2:
-                    minR = r1
-                    maxR = r2
-                else:
-                    minR = r2
-                    maxR = r1
-
-            filter = {'filter': f, 'repetitions': r, 'minR': minR, 'maxR': maxR}
-            if 'optional' in g1 or 'optional' in g2:
-                filter['optional'] = True
-
-            filters.append(filter)
-        for k in range(lengthDifference):
-            g = longestStruct[k + offsetInner]
-            f = g['filter']
-            r = g['repetitions']
-            g['optional'] = True
-            filters.append(g)
-        struct = {'s': s, 'l': sl, 'filters': filters}
-        if 'optional' in m2:
-            struct['optional'] = True
-        merge.append(struct)
+        return s, sl
 
     def longestMinDifference(self, struct1, struct2):
         if len(struct1) < len(struct2):
