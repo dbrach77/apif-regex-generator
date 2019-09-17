@@ -62,13 +62,13 @@ class Utils:
             if filter == currentFilter:
                 rep = rep + 1
 
-            f = {'filter': filter, 'repetitions': rep}
-
+            f = {'filter': filter, 'repetitions': rep, 'minR':0, 'maxR':0}
             if filter != currentFilter:
                 filters.append(f)
                 filter = currentFilter
                 rep = 1
 
+            f = {'filter': filter, 'repetitions': rep, 'minR':0, 'maxR':0}
             if l == len(s):
                 filters.append(f)
 
@@ -80,16 +80,21 @@ class Utils:
 
     def regex(self, s):
         regex =''
-        #if self.isHardCode == True:
+        i = 0
         for m in s:
-            regex = regex + self.regexString(m)
-        """else:
-            m = s
-            regex = self.regexString(m)"""
+            i = i +1
+            if 'optional' in m and not '(' in regex:
+                regex = regex + '('
+
+            regex = regex + self.singleGroupRegex(m)
+
+            if i == len(s) and 'optional' in m and regex!= '.*':# and not 'hc' in m:
+                regex = regex +')?'
+
         return regex
 
     #get the regex from the list of filters
-    def regexString(self, m):
+    def singleGroupRegex(self, m):
         regex = ''
 
         if 's' in m:
@@ -100,18 +105,27 @@ class Utils:
                 regex = '.*'
             else :
                 for f in filters:
-                    if 1 < f['repetitions']:
-                        regex = regex + '[' + f['filter'] +']' +'{' + str(f['repetitions']) + '}'
+                    if f['minR'] > 0 and f['maxR']>0:
+                        tmpregex = '[' + f['filter'] +']' +'{' + str(f['minR']) +','+str(f['maxR'])+ '}'
+                    elif 1 < f['repetitions']:
+                        tmpregex = '[' + f['filter'] +']' +'{' + str(f['repetitions']) + '}'
                     else:
-                        regex = regex + '[' + f['filter'] +']'
+                        tmpregex = '[' + f['filter'] +']'
+
+                    if 'optional' in f:
+                        tmpregex = '('+tmpregex+')?'
+
+                    regex = regex + tmpregex
 
         if 'hc' in m:
             regex = regex + m['hc']
+
         return regex
 
-    def merge(self,struct1,struct2):
-        regex =''
+    def merge(self, struct1, struct2):
         l = 0
+        filters = []
+        merge = []
         if len(struct1) < len(struct2):
             l = len(struct1)
             diffFilters = len(struct2) - l
@@ -124,92 +138,109 @@ class Utils:
         offset = 0
         for i in range(l):
             offset = offset + 1
-            groups = 0
             m1 = struct1[i]
             m2 = struct2[i]
-            s1 = self.regexString(m1)
-            s2 = self.regexString(m2)
 
-            if s1 == '.*' or s2 == '.*':
-                regex = regex + '.*'
-            elif s1 == s2:
-                regex = regex + s1
-                groups = groups + 1
-            else:
-                regex = self.mergeGroup(groups, m1, m2, regex)
+            if 's' in m1:
+                self.mergeFilters(filters, m1, m2, merge)
 
-        tempregex = ''
-        for j in range(diffFilters):
-            m = longest[j+offset]
-            s = self.regexString(m)
-            tempregex = tempregex + s
+            if 'hc' in m1:
+                filters = []
+                hc = {'hc': m1['hc']}
+                if 'optional' in m2:
+                    hc['optional'] = True
+                merge.append(hc)
 
-        if tempregex != '':
-            regex = regex+'('+tempregex+')?'
+        for l in range(diffFilters):
+            m = longest[l+offset]
+            if 's' in m:
+                m['optional'] = True
+                merge.append(m)
+            if 'hc' in m:
+                filters = []
+                merge.append({'hc': m['hc'],'optional': True})
+        return merge
 
-        return regex
-
-    def mergeGroup(self, groups, m1, m2, regex):
+    def mergeFilters(self, filters, m1, m2, merge):
         if len(m1['s']) > len(m2['s']):
             sl = len(m1['s'])
+            s = m1['s']
         else:
             sl = len(m2['s'])
-        filters1 = m1['filters']
-        filters2 = m2['filters']
-        if len(filters1) < len(filters2):
-            lf = len(filters1)
-            diffFilters = len(filters2) - lf
-            longest = filters2
-        else:
-            lf = len(filters2)
-            diffFilters = len(filters1) - lf
-            longest = filters1
-        offset = 0
-        tempregex = ''
-        for j in range(lf):
-            offset = offset + 1
-            g1 = filters1[j]
-            g2 = filters2[j]
+            s = m2['s']
+        filtersGroup1 = m1['filters']
+        filtersGroup2 = m2['filters']
+        lengthDifference, minLength, longestStruct = self.longestMinDifference(filtersGroup1, filtersGroup2)
+        offsetInner = 0
+        for j in range(minLength):
+            offsetInner = offsetInner + 1
+            g1 = filtersGroup1[j]
+            g2 = filtersGroup2[j]
             f1 = g1['filter']
             f2 = g2['filter']
             r1 = g1['repetitions']
             r2 = g2['repetitions']
-            if r1 < r2:
-                min = r1
-                diff = r2 - r1
-                follow = '[' + f2 + ']'
-            else:
-                min = r2
-                diff = r1 - r2
-                follow = '[' + f1 + ']'
-            if f1 != f2:
-                filter = '[' + f1 + f2 + ']'
-            else:
-                filter = '[' + f1 + ']'
+            minR2 = g2['minR']
+            maxR2 = g2['maxR']
 
-            if diff > 0:
-                tempregex = tempregex + filter + '{' + str(min)+','+ str(min+diff) + '}' #+ '(' + follow + '{' + str(diff) + '}' + ')?'
-                groups = groups + 1
+            if f1 == f2:
+                f = f1
+            elif f1 in f2:
+                f = f2
             else:
-                tempregex = tempregex + filter + '{' + str(min) + '}'
-                groups = groups + 1
+                f = f1 + f2
 
-        for k in range(diffFilters):
-            g = longest[k + offset]
+            r = 0
+            minR = 0
+            maxR = 0
+
+            if (r2 == 0):
+                if r1 < minR2:
+                    minR = r1
+                else:
+                    minR = minR2
+
+                if r1 > maxR2:
+                    maxR = r1
+                else:
+                    maxR = maxR2
+
+            else:
+                if r1 == r2:
+                    r = r1
+                elif r1 < r2:
+                    minR = r1
+                    maxR = r2
+                else:
+                    minR = r2
+                    maxR = r1
+
+            filter = {'filter': f, 'repetitions': r, 'minR': minR, 'maxR': maxR}
+            if 'optional' in g1 or 'optional' in g2:
+                filter['optional'] = True
+
+            filters.append(filter)
+        for k in range(lengthDifference):
+            g = longestStruct[k + offsetInner]
             f = g['filter']
             r = g['repetitions']
-            filter = '[' + f + ']'
-            #tempregex = tempregex + '(' + filter + '{' + str(r) + '}' + ')?'
-            tempregex = tempregex + '(' + filter + '{' + str(r) + '}' + ')?'
-            groups = groups + 1
-        # regex = regex + '[' + s1 + s2 + ']'
-        print(sl / 2)
-        print(groups)
-        if groups >  sl / 2:
-            regex = regex + '.*'
+            g['optional'] = True
+            filters.append(g)
+        struct = {'s': s, 'l': sl, 'filters': filters}
+        if 'optional' in m2:
+            struct['optional'] = True
+        merge.append(struct)
+
+    def longestMinDifference(self, struct1, struct2):
+        if len(struct1) < len(struct2):
+            minLength = len(struct1)
+            lengthDifference = len(struct2) - minLength
+            longest = struct2
         else:
-            regex = regex + tempregex
-        return regex
+            minLength = len(struct2)
+            lengthDifference = len(struct1) - minLength
+            longest = struct1
+        return lengthDifference, minLength, longest
 
 
 

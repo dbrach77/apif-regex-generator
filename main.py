@@ -1,10 +1,12 @@
 import re
+import sys
+
 import utils
 def regex(s):
     util = utils.Utils()
     util.maxLength = 20
     regexMap = util.singleGroupStructure(s)
-    regex = util.regexString(regexMap)
+    regex = util.singleGroupRegex(regexMap)
     p = re.compile(regex)
     m = p.findall(s)
     #print(m)
@@ -20,122 +22,132 @@ def regexForced(s):
     #print(m)
     print(regex)
 
+def test():
+    util = utils.Utils()
+    util.maxLength = 36
 
+    #p = re.compile(regexString2)
+    #m = p.match(s2)
+    #print(m)
+
+    #ora per il cazzo id merge. avendo una struttura figa, nel caso di hard code posso recuperare per ogni elemento la sua stringa e gestire il .* OLE!!!
+    #prima va fatto un controllo su dimennsione della struttra. se hanno dimensioni simili ok.
+    #se harccoded posso guardare la dimensione dei singoi pezzi. e se hanno le stesse hc. in pratica devono essere simili posizione per posizione
+
+
+    """
+    s1 = '1.1.1.1'
+    s2 = '111.111.111.111'
+    s3 = '11.1.11.11'
+    s4 = '111.111.111.1'
+    #"""
+
+    """
+    s1 = 'SBHLDB46L22H330R'
+    s2 = 'LKVVGL75M43C783A'
+    s3 = 'LKVVGL75M43C781G'
+    #"""
+
+    """
+    s1 = '2857ef18-d549-11e9-bb65-2a2ae2dbcce4'
+    s2 = '2857f3f0-d549-11e9-bb65-2a2ae2dbcce4'
+    s3 = '2857f3f0-d549-1111-bb65-2a2ae2dbcce4'
+    #"""
+
+    """
+    s1 = '5d7b5e00f894261071b552d0'
+    s2 = '5d7b5e1a214a01a47eb26c5c'
+    s3 = '5d7b5e1a214a01a47eb26c5c'
+    #"""
+
+    """
+    s1 = '014-76-3875'
+    s2 = '204-72-7894'
+    #"""
+
+    """
+    s1 = 'abcd_1234'
+    s2 = '1234'
+    #"""
+
+    """
+    s1 = '014-7676-3875'
+    s2 = '204-72-7894'
+    #"""
+
+    #"""
+    s1 = '014-7a7a-3875'
+    s2 = '204-77aa77bb-7894'
+    s3 = '014-7a7a-3875'
+    #"""
+
+    """
+    s1 = 'a1a1a1a1a1'
+    s2 = 'b2b2b2b2b2'
+    s3 = 'aaa_1234'
+    s4 = 'aaa_1234'
+    #"""
+
+    print('************** s1')
+    print(s1)
+    regexMap1 = util.regexStructure(s1)
+    print(regexMap1)
+    regexString1 = util.regex(regexMap1)
+    print(regexString1)
+
+    print('************** s2')
+    print(s2)
+    regexMap2 = util.regexStructure(s2)
+    print(regexMap2)
+    regexString2 = util.regex(regexMap2)
+    print(regexString2)
+
+    merged = util.merge(regexMap1, regexMap2)
+    print(merged)
+    print(util.regex(merged))
+
+
+    print('************** s3')
+    print(s3)
+    regexMap3 = util.regexStructure(s3)
+    print(regexMap3)
+    regexString3 = util.regex(regexMap3)
+    print(regexString3)
+
+    merged = util.merge(regexMap3, merged)
+    print(merged)
+    print(util.regex(merged))
+
+    """
+    print('************** Matches')
+    p = re.compile(merged)
+    print(p.match(s1))
+    print(p.match(s2))
+    """
+
+
+#test()
 util = utils.Utils()
 util.maxLength = 36
+print(sys.argv[1])
+fileName = sys.argv[1]
+lineList = [line.rstrip('\n') for line in open(fileName)]
 
-#p = re.compile(regexString2)
-#m = p.match(s2)
-#print(m)
-
-#ora per il cazzo id merge. avendo una struttura figa, nel caso di hard code posso recuperare per ogni elemento la sua stringa e gestire il .* OLE!!!
-#prima va fatto un controllo su dimennsione della struttra. se hanno dimensioni simili ok.
-#se harccoded posso guardare la dimensione dei singoi pezzi. e se hanno le stesse hc. in pratica devono essere simili posizione per posizione
-
-
-"""
-s1 = '1.1.1.1'
-s2 = '111.111.111.111'
-#"""
-
-"""
-s1 = 'SBHLDB46L22H330P'
-s2 = 'LKVVGL75M43C783A'
-#"""
-
-"""
-s1 = 'SBHLDB46L22H330P'
-s2 = 'LKVVGL75M43C783A'
-#"""
-
-"""
-s1 = '2857ef18-d549-11e9-bb65-2a2ae2dbcce4'
-s2 = '2857f3f0-d549-11e9-bb65-2a2ae2dbcce4'
-#"""
-
-"""
-s1 = '5d7b5e00f894261071b552d0'
-s2 = '5d7b5e1a214a01a47eb26c5c'
-#"""
+for i in range(len(lineList)):
+    #print('INPUT')
+    print(lineList[i])
+    inputMap = util.regexStructure(lineList[i])
+    #print(inputMap)
+    print(util.regex(inputMap))
+    if i == 0:
+        mergeMap = inputMap
+    else:
+        print('MERGE')
+        mergeMap = util.merge(inputMap, mergeMap)
+        #print(mergeMap)
+        print(util.regex(mergeMap))
 
 
-#"""
-s1 = 'aaa123aaa'
-s2 = 'aaa123'
-#"""
-
-print(s1)
-regexMap1 = util.regexStructure(s1)
-print(regexMap1)
-regexString1 = util.regex(regexMap1)
-print(regexString1)
-
-print(s2)
-regexMap2 = util.regexStructure(s2)
-print(regexMap2)
-regexString2 = util.regex(regexMap2)
-print(regexString2)
-
-merged = util.merge(regexMap1,regexMap2)
-print('**************')
-print(merged)
-
-p = re.compile(merged)
-print(p.match(s1))
-print(p.match(s2))
-
-
-#p = re.compile('[a-z]{2}([a-z]{1})?[0-9]{3}')
-#p = re.compile(fusion)
-#p = re.compile(fusionf)
-#m = p.match(s1)
-#print(m)
-#m = p.match(s2)
-#print(m)
-
-
-#regex("£££abc123_%&abc___")
-#regex("123_abc")
-#regex("123&abc")
-#regex("1232_&_321")
-#regex("328-02-90-136")
-#regex("un due tre stella 56 7 999")
-#print('***************************')
-#print('abc123abc123')
-#regex('abc123abc123')
-#regexForced('abc123abc123')
-#print('***************************')
-#print('abc123abc')
-##regex('abc123abc')
-#regexForced('abc123abc')
-#print('***************************')
-#print('abc123')
-#regex('abc123')
-#regexForced('abc123')
-#print('***************************')
-#print('1616161616161616')
-#regex('1616161616161616')
-#print('***************************')
-#print('17171717171717171')
-#regex('17171717171717171')
-#print('***************************')
-#print('a22zz-c37-d11abc')
-#regex('a22zz-c37-d11abc')
-#regexForced('a22zz-c37-d11abc')
-
-#print('***************************')
-#print('a22zz-c37-d11')
-##regex('a22zz-c37-d11')
-#regexForced('a22zz-c37-d11')
-
-#regex('abc')
-#regex('123')
-
-#[a-z]{3}
-#[0-9]{3}
-#p = re.compile('[a-z]{3}|[0-9]{3}')
-#m = p.match('abc123')
-#print(m)
 
 
 
