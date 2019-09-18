@@ -128,8 +128,8 @@ def test():
 util = utils.Utils()
 util.maxLength = 36
 print(sys.argv[1])
-fileName = sys.argv[1]
-#fileName = 'email.txt'
+#fileName = sys.argv[1]
+fileName = 'email.txt'
 lineList = [line.rstrip('\n') for line in open(fileName)]
 
 for i in range(len(lineList)):
@@ -147,10 +147,12 @@ for i in range(len(lineList)):
         print(util.regex(mergeMap))
 
 print('************** Matches')
+print(util.regex(mergeMap))
 for i in range(len(lineList)):
     p = re.compile(util.regex(mergeMap))
     print(p.match(lineList[i]))
 
+print(util.regex(mergeMap))
 
 
 

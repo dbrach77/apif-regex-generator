@@ -177,20 +177,20 @@ class Utils:
                 elif hc1 in hc2:
                     hardcode = {'hc': hc2}
                     hardcode['mutual'] = True
-                    hardcode['prefix'] = '('
-                    hardcode['postfix'] = ')'
+                    hardcode['prefix'] = '['
+                    hardcode['postfix'] = ']'
                     merge.append(hardcode)
                 elif hc2 in hc1:
                     hardcode = {'hc': hc1}
                     hardcode['mutual'] = True
-                    hardcode['prefix'] = '('
-                    hardcode['postfix'] = ')?'
+                    hardcode['prefix'] = '['
+                    hardcode['postfix'] = ']'
                     merge.append(hardcode)
                 else:
                     hardcode = {'hc': m1['hc']+'|'+m2['hc']}
                     hardcode['mutual'] = True
-                    hardcode['prefix'] = '('
-                    hardcode['postfix'] = ')'
+                    hardcode['prefix'] = '['
+                    hardcode['postfix'] = ']'
                     merge.append(hardcode)
 
         for l in range(diffFilters):
