@@ -130,10 +130,11 @@ util.maxLength = 36
 print(sys.argv[1])
 #fileName = sys.argv[1]
 fileName = 'email.txt'
+#fileName = 'password.txt'
 lineList = [line.rstrip('\n') for line in open(fileName)]
 
+print('INPUT')
 for i in range(len(lineList)):
-    print('INPUT')
     print(lineList[i])
     inputMap = util.regexStructure(lineList[i])
     #print(inputMap)
@@ -141,10 +142,11 @@ for i in range(len(lineList)):
     if i == 0:
         mergeMap = inputMap
     else:
-        print('MERGE')
         mergeMap = util.merge(inputMap, mergeMap)
-        #print(mergeMap)
-        print(util.regex(mergeMap))
+
+print('MERGE')
+print(util.regex(mergeMap))
+#print(mergeMap)
 
 print('************** Matches')
 print(util.regex(mergeMap))
@@ -152,7 +154,9 @@ for i in range(len(lineList)):
     p = re.compile(util.regex(mergeMap))
     print(p.match(lineList[i]))
 
-print(util.regex(mergeMap))
+
+#print(len(mergeMap['filters']))
+
 
 
 

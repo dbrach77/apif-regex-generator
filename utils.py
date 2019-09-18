@@ -81,33 +81,51 @@ class Utils:
     def regex(self, s):
         regex =''
         i = 0
-        open = False
-        closed = False
+        lenght = 0
+        optional = False
+        mutual = False
+        optionalCount = 0
+        mandatory = 0
 
         for m in s:
             i = i +1
 
-            if open == True and (not 'optional' in m or 'hc' in m) and not i == len(s):
-                regex = regex + m['postfix']
-                open = False
+            if (mutual == True):
+                regex = regex + ']'
+                mutual = False
 
-            if 'optional' in m and not open:
+            if optional == True and (not 'optional' in m or 'hc' in m) and not i == len(s):
+                regex = regex + ')?'
+                optional = False
+
+
+            if optional == False and 'optional' in m:
                 regex = regex + m['prefix']
-                open = True
+                optional = True
+
+
+            if 'optional' in m:
+                optionalCount = optional +1
+            else:
+                mandatory = mandatory + 1
 
             if 'mutual' in m and 'prefix' in m:
                 regex = regex + m['prefix']
+                mutual = True
 
             regex = regex + self.singleGroupRegex(m)
 
-
+            """
             if 'mutual' in m and 'postfix' in m:
                 regex = regex + m['postfix']
+            """
 
-            if open == True and i == len(s):
+            if ((optional == True) or (mutual == True)) and i == len(s):
                 regex = regex + m['postfix']
                 open = False
 
+        if optionalCount > mandatory:
+            regex = '.*'
 
         return regex
 
