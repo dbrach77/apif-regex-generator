@@ -128,8 +128,8 @@ def test():
 util = utils.Utils()
 util.maxLength = 36
 print(sys.argv[1])
-#fileName = sys.argv[1]
-fileName = 'email.txt'
+fileName = sys.argv[1]
+#fileName = 'email.txt'
 lineList = [line.rstrip('\n') for line in open(fileName)]
 
 for i in range(len(lineList)):
