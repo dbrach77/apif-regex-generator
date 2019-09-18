@@ -86,22 +86,28 @@ class Utils:
 
         for m in s:
             i = i +1
+
             if open == True and (not 'optional' in m or 'hc' in m) and not i == len(s):
-                regex = regex +')?'
+                regex = regex + m['postfix']
                 open = False
 
-
-
             if 'optional' in m and not open:
-                regex = regex + '('
+                regex = regex + m['prefix']
                 open = True
+
+            if 'mutual' in m and 'prefix' in m:
+                regex = regex + m['prefix']
 
             regex = regex + self.singleGroupRegex(m)
 
 
+            if 'mutual' in m and 'postfix' in m:
+                regex = regex + m['postfix']
+
             if open == True and i == len(s):
                 regex = regex +')?'
                 open = False
+
 
         return regex
 
@@ -162,25 +168,44 @@ class Utils:
                 hc2 = m2['hc']
 
                 if hc1 == hc2:
-                    hardcode = {'hc': m1['hc']}
+                    hardcode = {'hc': hc1}
                     if 'optional' in m2:
                         hardcode['optional'] = True
+                        hardcode['prefix'] = '('
+                        hardcode['postfix'] = ')?'
+                    merge.append(hardcode)
+                elif hc1 in hc2:
+                    hardcode = {'hc': hc2}
+                    hardcode['mutual'] = True
+                    hardcode['prefix'] = '('
+                    hardcode['postfix'] = ')'
+                    merge.append(hardcode)
+                elif hc2 in hc1:
+                    hardcode = {'hc': hc1}
+                    hardcode['mutual'] = True
+                    hardcode['prefix'] = '('
+                    hardcode['postfix'] = ')?'
                     merge.append(hardcode)
                 else:
-                    hardcode = {'hc': m1['hc']}
-                    hardcode['optional'] = True
-                    merge.append(hardcode)
-                    hardcode = {'hc': m2['hc']}
-                    hardcode['optional'] = True
+                    hardcode = {'hc': m1['hc']+'|'+m2['hc']}
+                    hardcode['mutual'] = True
+                    hardcode['prefix'] = '('
+                    hardcode['postfix'] = ')'
                     merge.append(hardcode)
 
         for l in range(diffFilters):
             m = longest[l+offset]
             if 's' in m:
                 m['optional'] = True
+                m['prefix'] = '('
+                m['postfix'] = ')?'
                 merge.append(m)
             if 'hc' in m:
-                merge.append({'hc': m['hc'],'optional': True})
+                hardcode = {'hc': m['hc']}
+                hardcode['optional'] = True
+                hardcode['prefix'] = '('
+                hardcode['postfix'] = ')?'
+                merge.append(hardcode)
 
         return merge
 
@@ -197,12 +222,17 @@ class Utils:
         for k in range(lengthDifference):
             group = longestStruct[k + offset]
             group['optional'] = True
+            group['prefix'] = '('
+            group['postfix'] = ')?'
             filters.append(group)
 
         struct = {'s': s, 'l': sl, 'filters': filters}
 
         if 'optional' in m2:
             struct['optional'] = True
+            struct['prefix'] = '('
+            struct['postfix'] = ')?'
+
         merge.append(struct)
 
     def mergeSingleGroup(self, filters, filtersGroup1, filtersGroup2, j, offset):
@@ -214,6 +244,9 @@ class Utils:
 
         if 'optional' in group1 or 'optional' in group2:
             filter['optional'] = True
+            filter['prefix'] = '('
+            filter['postfix'] = ')?'
+
         filters.append(filter)
 
         return offset
