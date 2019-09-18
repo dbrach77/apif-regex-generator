@@ -105,7 +105,7 @@ class Utils:
                 regex = regex + m['postfix']
 
             if open == True and i == len(s):
-                regex = regex +')?'
+                regex = regex + m['postfix']
                 open = False
 
 
