@@ -92,7 +92,7 @@ class Utils:
             i = i +1
 
             if (mutual == True):
-                regex = regex + ']'
+                regex = regex + ')'
                 mutual = False
 
             if optional == True and (not 'optional' in m or 'hc' in m) and not i == len(s):
@@ -224,8 +224,8 @@ class Utils:
 
     def makeMutual(self, m):
         m['mutual'] = True
-        m['prefix'] = '['
-        m['postfix'] = ']'
+        m['prefix'] = '('
+        m['postfix'] = ')'
 
     def mergeFilters(self, filters, m1, m2, merge):
         s, sl = self.longestString(m1, m2)
