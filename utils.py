@@ -148,8 +148,10 @@ class Utils:
                     else:
                         tmpregex = '[' + f['filter'] +']'
 
+                    """
                     if 'optional' in f:
                         tmpregex = '('+tmpregex+')?'
+                    """
 
                     regex = regex + tmpregex
 
@@ -206,21 +208,21 @@ class Utils:
         hc2 = m2['hc']
         if hc1 == hc2:
             hardcode = {'hc': hc1}
-            if 'optional' in m2:
-                self.makeOptional(hardcode)
-            merge.append(hardcode)
+
         elif hc1 in hc2:
             hardcode = {'hc': hc2}
             self.makeMutual(hardcode)
-            merge.append(hardcode)
         elif hc2 in hc1:
             hardcode = {'hc': hc1}
             self.makeMutual(hardcode)
-            merge.append(hardcode)
         else:
             hardcode = {'hc': m1['hc'] + '|' + m2['hc']}
             self.makeMutual(hardcode)
-            merge.append(hardcode)
+
+        if 'optional' in m2:
+            self.makeOptional(hardcode)
+
+        merge.append(hardcode)
 
     def makeMutual(self, m):
         m['mutual'] = True
