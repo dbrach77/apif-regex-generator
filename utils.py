@@ -22,16 +22,25 @@ class Utils:
         if  ishc == True:
             for n in s:
                 l = l + 1
+                #se ho finito la stringa o è un carattere hc e hc è vuoto vuolte dire che devo appendere un gruppo filtro
                 if l == len(s) or not('a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9') and hc == '':
+                    #fine stringa e hc valorizzato allora devo inserire un gruppo hc prima dell'ultimo gruppo filtro
                     if l == len(s) and hc != '':
                         filters.append({'hc': self.escapeHc(hc)})
+                    #fine stringa e carattere alfanumerico allora accodo a temp l'ultimo carattere al gruppo filtro
                     if l == len(s) and 'a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9':
                         temp = temp + n
+                    #appendo il guppo filtro
                     filters.append(self.singleGroupStructure(temp))
+                    #fine striga e carattere hc allora accodo l'ultimo gruppo hc dopo l'ultimo gruppo filtro
+                    if l == len(s) and not('a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9'):
+                        filters.append({'hc': self.escapeHc(n)})
                     temp = ''
                     hc = n
+                #se hc non è vuoto e ho ancora carattere hc allungo hc
                 elif hc != '' and not('a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9'):
                     hc = hc + n
+                #se hc non è vuoto e
                 elif hc != '' and (l == len(s) or ('a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9')):
                     filters.append({'hc': self.escapeHc(hc)})
                     hc = ''
@@ -116,7 +125,7 @@ class Utils:
                 optional = True
 
 
-            if not 'optional' in m:
+            if not 'optional' in m and not 'hc' in m:
                 mandatory = mandatory + 1
 
             if 'mutual' in m and 'prefix' in m:
@@ -137,7 +146,7 @@ class Utils:
         if self.forced == False and optionalCount > mandatory:
             regex = '.*'
 
-        return regex
+        return regex,mandatory,optionalCount
 
     #get the regex from the list of filters
     def singleGroupRegex(self, m, optional):
