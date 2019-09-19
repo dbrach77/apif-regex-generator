@@ -24,7 +24,7 @@ class Utils:
                 l = l + 1
                 if l == len(s) or not('a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9') and hc == '':
                     if l == len(s) and hc != '':
-                        filters.append({'hc': hc})
+                        filters.append({'hc': self.escapeHc(hc)})
                     if l == len(s) and 'a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9':
                         temp = temp + n
                     filters.append(self.singleGroupStructure(temp))
@@ -33,7 +33,7 @@ class Utils:
                 elif hc != '' and not('a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9'):
                     hc = hc + n
                 elif hc != '' and (l == len(s) or ('a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9')):
-                    filters.append({'hc': hc})
+                    filters.append({'hc': self.escapeHc(hc)})
                     hc = ''
                     temp = temp + n
                 else:
@@ -42,6 +42,16 @@ class Utils:
             filters.append(self.singleGroupStructure(s))
 
         return filters
+
+    def escapeHc(self,hc):
+        result = ''
+        for i in hc:
+            escape = ''
+            if i in '.^$*+?{}[]\|()':
+                result = result + '\\' + i
+            else:
+                result = result + i
+        return result
 
     def singleGroupStructure(self, s):
         filter = ''
@@ -113,7 +123,7 @@ class Utils:
                 regex = regex + m['prefix']
                 mutual = True
 
-            regex = regex + self.singleGroupRegex(m)
+            regex = regex + self.singleGroupRegex(m,optional)
 
             """
             if 'mutual' in m and 'postfix' in m:
@@ -130,7 +140,7 @@ class Utils:
         return regex
 
     #get the regex from the list of filters
-    def singleGroupRegex(self, m):
+    def singleGroupRegex(self, m, optional):
         regex = ''
 
         if 's' in m:
@@ -148,10 +158,10 @@ class Utils:
                     else:
                         tmpregex = '[' + f['filter'] +']'
 
-                    """
-                    if 'optional' in f:
+                    #"""
+                    if 'optional' in f and optional == False:
                         tmpregex = '('+tmpregex+')?'
-                    """
+                    #"""
 
                     regex = regex + tmpregex
 
@@ -208,7 +218,6 @@ class Utils:
         hc2 = m2['hc']
         if hc1 == hc2:
             hardcode = {'hc': hc1}
-
         elif hc1 in hc2:
             hardcode = {'hc': hc2}
             self.makeMutual(hardcode)
