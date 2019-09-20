@@ -20,15 +20,18 @@ for i in range(len(lineList)):
         mergeMap = inputMap
     else:
         mergeMap = util.merge(inputMap, mergeMap)
+    #print(mergeMap)
 
 print('MERGE')
-print(mergeMap)
+#print(mergeMap)
 regex,mandatory,optional = util.regex(mergeMap)
 print(str(mandatory))
 print(str(optional))
-print(regex)
 
-#regex = '([0-9]{1})?(\(|-|\.)[0-9]{3}(\) |-|\.)[0-9]{3,4}((-| )[0-9a-z]{1,4}[0-9]{3,5})?( [a-z][0-9]{3,5})?'
+
+#regex = '[0-9a-z]{3}([a-z0-9]{3}[a-z0-9]{3})?'
+print(regex)
+regex = '^'+regex+'$'
 matches = 0
 print('************** Matches')
 for i in range(len(lineList)):
@@ -36,7 +39,7 @@ for i in range(len(lineList)):
     match = p.match(lineList[i])
     if (match != None and match.string == lineList[i]):
         matches = matches + 1
-        print(lineList[i])
+        #print(match)
 
 if matches == len(lineList):
     print('************** ALL Matches')

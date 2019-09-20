@@ -24,17 +24,7 @@ class Utils:
                 l = l + 1
                 #se ho finito la stringa o è un carattere hc e hc è vuoto vuolte dire che devo appendere un gruppo filtro
                 if l == len(s) or not('a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9') and hc == '':
-                    #fine stringa e hc valorizzato allora devo inserire un gruppo hc prima dell'ultimo gruppo filtro
-                    if l == len(s) and hc != '':
-                        filters.append({'hc': self.escapeHc(hc)})
-                    #fine stringa e carattere alfanumerico allora accodo a temp l'ultimo carattere al gruppo filtro
-                    if l == len(s) and 'a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9':
-                        temp = temp + n
-                    #appendo il guppo filtro
-                    filters.append(self.singleGroupStructure(temp))
-                    #fine striga e carattere hc allora accodo l'ultimo gruppo hc dopo l'ultimo gruppo filtro
-                    if l == len(s) and not('a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9'):
-                        filters.append({'hc': self.escapeHc(n)})
+                    self.endOfString(filters, hc, l, n, s, temp)
                     temp = ''
                     hc = n
                 #se hc non è vuoto e ho ancora carattere hc allungo hc
@@ -51,6 +41,19 @@ class Utils:
             filters.append(self.singleGroupStructure(s))
 
         return filters
+
+    def endOfString(self, filters, hc, l, n, s, temp):
+        # fine stringa e hc valorizzato allora devo inserire un gruppo hc prima dell'ultimo gruppo filtro
+        if l == len(s) and hc != '':
+            filters.append({'hc': self.escapeHc(hc)})
+        # fine stringa e carattere alfanumerico allora accodo a temp l'ultimo carattere al gruppo filtro
+        if l == len(s) and 'a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9':
+            temp = temp + n
+        # appendo il guppo filtro
+        filters.append(self.singleGroupStructure(temp))
+        # fine striga e carattere hc allora accodo l'ultimo gruppo hc dopo l'ultimo gruppo filtro
+        if l == len(s) and not ('a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9'):
+            filters.append({'hc': self.escapeHc(n)})
 
     def escapeHc(self,hc):
         result = ''
@@ -71,16 +74,7 @@ class Utils:
 
         for n in s:
             l = l + 1
-            if 'a' <= n <= 'z':
-                currentFilter = 'a-z'
-            elif 'A' <= n <= 'Z':
-                currentFilter = 'A-Z'
-            elif '0' <= n <= '9':
-                currentFilter = '0-9'
-            if filter == '':
-                filter = currentFilter
-            if filter == currentFilter:
-                rep = rep + 1
+            currentFilter, filter, rep = self.filterAndRepetitions(currentFilter, filter, n, rep)
 
             f = {'filter': filter, 'repetitions': rep, 'minR':0, 'maxR':0}
             if filter != currentFilter:
@@ -92,16 +86,25 @@ class Utils:
             if l == len(s):
                 filters.append(f)
 
-        #self.sLenght = len(s)
         struct = {'s':s,'l':len(s),'filters':filters}
         return struct
-        #return filters
 
+    def filterAndRepetitions(self, currentFilter, filter, n, rep):
+        if 'a' <= n <= 'z':
+            currentFilter = 'a-z'
+        elif 'A' <= n <= 'Z':
+            currentFilter = 'A-Z'
+        elif '0' <= n <= '9':
+            currentFilter = '0-9'
+        if filter == '':
+            filter = currentFilter
+        if filter == currentFilter:
+            rep = rep + 1
+        return currentFilter, filter, rep
 
     def regex(self, s):
         regex =''
         i = 0
-        lenght = 0
         optional = False
         mutual = False
         optionalCount = 0
@@ -109,44 +112,57 @@ class Utils:
 
         for m in s:
             i = i +1
-
-            if (mutual == True):
-                regex = regex + ')'
-                mutual = False
-
-            if optional == True and (not 'optional' in m or 'hc' in m) and not i == len(s):
-                regex = regex + ')?'
-                optional = False
-                optionalCount = optionalCount +1
-
-
-            if optional == False and 'optional' in m:
-                regex = regex + m['prefix']
-                optional = True
-
-
-            if not 'optional' in m and not 'hc' in m:
-                mandatory = mandatory + 1
-
-            if 'mutual' in m and 'prefix' in m:
-                regex = regex + m['prefix']
-                mutual = True
-
+            mandatory, mutual, optional, optionalCount, regex = self.preRegex(i, m, mandatory, mutual, optional,optionalCount, regex, s)
             regex = regex + self.singleGroupRegex(m,optional)
+            regex = self.postRegex(i, mutual, optional, regex, s)
 
-            """
-            if 'mutual' in m and 'postfix' in m:
-                regex = regex + m['postfix']
-            """
+        for m in s:
+            optional = False
+            if 's' in m:
+                filters = m['filters']
+                for f in filters:
+                    if 'optional' in f:
+                        optionalCount = optionalCount + 1
+                        optional = True
+            if 'optional' in m:
+                optionalCount = optionalCount + 1
+                optional = True
+            if not optional:# and not 'hc' in m:
+                mandatory = mandatory+1
 
-            if ((optional == True) or (mutual == True)) and i == len(s):
-                regex = regex + m['postfix']
-                open = False
+
+
 
         if self.forced == False and optionalCount > mandatory:
             regex = '.*'
 
         return regex,mandatory,optionalCount
+
+    def postRegex(self, i, mutual, optional, regex, s):
+        if ((optional == True) or (mutual == True)) and i == len(s):
+            regex = regex + ')?'
+            open = False
+        return regex
+
+    def preRegex(self, i, m, mandatory, mutual, optional, optionalCount, regex, s):
+        if (mutual == True):
+            regex = regex + ')'
+            mutual = False
+        if optional == True and (not 'optional' in m or 'hc' in m) and not i == len(s):
+            regex = regex + ')?'
+            optional = False
+            #optionalCount = optionalCount + 1
+        if optional == False and 'optional' in m:
+            regex = regex + '('
+            optional = True
+            #optionalCount = optionalCount + 1
+        if not 'optional' in m and not 'hc' in m:
+            pass
+            #mandatory = mandatory + 1
+        if 'mutual' in m:  # and 'prefix' in m:
+            regex = regex + '('
+            mutual = True
+        return mandatory, mutual, optional, optionalCount, regex
 
     #get the regex from the list of filters
     def singleGroupRegex(self, m, optional):
@@ -160,40 +176,35 @@ class Utils:
                 regex = '.*'
             else :
                 for f in filters:
-                    if f['minR'] > 0 and f['maxR']>0:
-                        tmpregex = '[' + f['filter'] +']' +'{' + str(f['minR']) +','+str(f['maxR'])+ '}'
-                    elif 1 < f['repetitions']:
-                        tmpregex = '[' + f['filter'] +']' +'{' + str(f['repetitions']) + '}'
-                    else:
-                        tmpregex = '[' + f['filter'] +']'
-
-                    #"""
-                    if 'optional' in f and optional == False:
-                        tmpregex = '('+tmpregex+')?'
-                    #"""
-
-                    regex = regex + tmpregex
+                    regex = self.singleFilterRegex(f, optional, regex)
 
         if 'hc' in m:
             regex = regex + m['hc']
 
         return regex
 
+    def singleFilterRegex(self, f, optional, regex):
+        if f['minR'] > 0 and f['maxR'] > 0:
+            tmpregex = '[' + f['filter'] + ']' + '{' + str(f['minR']) + ',' + str(f['maxR']) + '}'
+        elif 1 < f['repetitions']:
+            tmpregex = '[' + f['filter'] + ']' + '{' + str(f['repetitions']) + '}'
+        else:
+            tmpregex = '[' + f['filter'] + ']'
+        # """
+        if 'optional' in f and optional == False:
+            tmpregex = '(' + tmpregex + ')?'
+        # """
+        regex = regex + tmpregex
+        return regex
+
     def merge(self, struct1, struct2):
-        l = 0
+        minLength = 0
         filters = []
         merge = []
-        if len(struct1) < len(struct2):
-            l = len(struct1)
-            diffFilters = len(struct2) - l
-            longest = struct2
-        else:
-            l = len(struct2)
-            diffFilters = len(struct1) - l
-            longest = struct1
+        lengthDifference, minLength, longestStruct = self.longestMinDifference(struct1, struct2)
 
         offset = 0
-        for i in range(l):
+        for i in range(minLength):
             offset = offset + 1
             m1 = struct1[i]
             m2 = struct2[i]
@@ -205,8 +216,8 @@ class Utils:
                 filters = []
                 self.mergeHc(m1, m2, merge)
 
-        for l in range(diffFilters):
-            m = longest[l+offset]
+        for minLength in range(lengthDifference):
+            m = longestStruct[minLength+offset]
             if 's' in m:
                 self.makeOptional(m)
                 merge.append(m)
@@ -216,36 +227,6 @@ class Utils:
                 merge.append(hardcode)
 
         return merge
-
-    def makeOptional(self, m):
-        m['optional'] = True
-        m['prefix'] = '('
-        m['postfix'] = ')?'
-
-    def mergeHc(self, m1, m2, merge):
-        hc1 = m1['hc']
-        hc2 = m2['hc']
-        if hc1 == hc2:
-            hardcode = {'hc': hc1}
-        elif hc1 in hc2:
-            hardcode = {'hc': hc2}
-            self.makeMutual(hardcode)
-        elif hc2 in hc1:
-            hardcode = {'hc': hc1}
-            self.makeMutual(hardcode)
-        else:
-            hardcode = {'hc': m1['hc'] + '|' + m2['hc']}
-            self.makeMutual(hardcode)
-
-        if 'optional' in m2:
-            self.makeOptional(hardcode)
-
-        merge.append(hardcode)
-
-    def makeMutual(self, m):
-        m['mutual'] = True
-        m['prefix'] = '('
-        m['postfix'] = ')'
 
     def mergeFilters(self, filters, m1, m2, merge):
         s, sl = self.longestString(m1, m2)
@@ -282,6 +263,8 @@ class Utils:
         filters.append(filter)
 
         return offset
+
+
 
     def repetitions(self, maxRepetitions2, minRepetitions2, repetitions1, repetitions2):
         r = 0
@@ -351,6 +334,31 @@ class Utils:
             longest = struct1
         return lengthDifference, minLength, longest
 
+    def mergeHc(self, m1, m2, merge):
+        hc1 = m1['hc']
+        hc2 = m2['hc']
+        if hc1 == hc2:
+            hardcode = {'hc': hc1}
+        elif hc1 in hc2:
+            hardcode = {'hc': hc2}
+            self.makeMutual(hardcode)
+        elif hc2 in hc1:
+            hardcode = {'hc': hc1}
+            self.makeMutual(hardcode)
+        else:
+            hardcode = {'hc': m1['hc'] + '|' + m2['hc']}
+            self.makeMutual(hardcode)
+
+        if 'optional' in m2:
+            self.makeOptional(hardcode)
+
+        merge.append(hardcode)
+
+    def makeOptional(self, m):
+        m['optional'] = True
+
+    def makeMutual(self, m):
+        m['mutual'] = True
 
 
 
