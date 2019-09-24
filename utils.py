@@ -4,11 +4,18 @@ class Utils:
     sLenght = 0
     forced = False
     coeff=2
+    parameters = ''
+
+    def hcChar(self,n):
+        if 'a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9' or n in self.parameters:
+            return False
+        else:
+            return True
 
     def hardcoded(self, s):
         self.isHardCode = False
         for n in s:
-            if not self.isHardCode and ('a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9'):
+            if not self.isHardCode and not self.hcChar(n):
                 self.isHardCode = False
             else:
                 self.isHardCode = True
@@ -30,13 +37,16 @@ class Utils:
             currentFilter = 'A-Z'
         elif '0' <= n <= '9':
             currentFilter = '0-9'
+        elif n in self.parameters:
+            currentFilter = self.escapeHc(n)
         if filter == '':
             filter = currentFilter
         if filter == currentFilter:
             rep = rep + 1
         return currentFilter, filter, rep
 
-    def checkSingleGroup(self, m, mandatory, optionalCount, regex, s, min, max):
+    def checkSingleGroup(self, m, mandatory, regex, s, min, max):
+        optionalCount = 0
         for m in s:
             optional = False
 

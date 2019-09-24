@@ -4,6 +4,7 @@ class Regex:
 
     util = utils.Utils()
     maxLength = 36
+    parameters = ''
 
     def regexStructure(self, s):
             temp = ''
@@ -16,15 +17,15 @@ class Regex:
                 for n in s:
                     l = l + 1
                     #se ho finito la stringa o è un carattere hc e hc è vuoto vuolte dire che devo appendere un gruppo filtro
-                    if l == len(s) or not('a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9') and hc == '':
+                    if l == len(s) or self.util.hcChar(n) and hc == '':
                         self.endOfString(filters, hc, l, n, s, temp)
                         temp = ''
                         hc = n
                     #se hc non è vuoto e ho ancora carattere hc allungo hc
-                    elif hc != '' and not('a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9'):
+                    elif hc != '' and self.util.hcChar(n):
                         hc = hc + n
                     #se hc non è vuoto e
-                    elif hc != '' and (l == len(s) or ('a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9')):
+                    elif hc != '' and (l == len(s) or not self.util.hcChar(n)):
                         filters.append({'hc': self.util.escapeHc(hc)})
                         hc = ''
                         temp = temp + n
@@ -40,12 +41,12 @@ class Regex:
         if l == len(s) and hc != '':
             filters.append({'hc': self.util.escapeHc(hc)})
         # fine stringa e carattere alfanumerico allora accodo a temp l'ultimo carattere al gruppo filtro
-        if l == len(s) and 'a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9':
+        if l == len(s) and not self.util.hcChar(n):
             temp = temp + n
         # appendo il guppo filtro
         filters.append(self.singleGroupStructure(temp))
         # fine striga e carattere hc allora accodo l'ultimo gruppo hc dopo l'ultimo gruppo filtro
-        if l == len(s) and not ('a' <= n <= 'z' or 'A' <= n <= 'Z' or '0' <= n <= '9'):
+        if l == len(s) and self.util.hcChar(n):
             filters.append({'hc': self.util.escapeHc(n)})
 
     def singleGroupStructure(self, s):
@@ -85,10 +86,10 @@ class Regex:
 
         for m in s:
             i = i +1
-            mutual, optional, regex = self.util.preRegex(i, m, mutual, optional, regex, s)
+            #mutual, optional, regex = self.util.preRegex(i, m, mutual, optional, regex, s)
             temp,tmpmin,tmpmax = self.singleGroupRegex(m,optional)
             regex = regex + temp
-            regex = self.util.postRegex(i, mutual, optional, regex, s)
+            #regex = self.util.postRegex(i, mutual, optional, regex, s)
             #if min == 0 or tmpmin < min:
             min = tmpmin
             max = max + tmpmax
@@ -101,8 +102,8 @@ class Regex:
                         hardcoded = True
             if 'hc' in m:
                 hardcoded = True
-
-        mandatory, optionalCount, regex = self.util.checkSingleGroup(m, mandatory, optionalCount, regex, s, min, max)
+        optionalCount = 0
+        mandatory, optionalCount, regex = self.util.checkSingleGroup(m, mandatory, regex, s, min, max)
         return regex,mandatory,optionalCount
 
     #get the regex from the list of filters
@@ -121,6 +122,9 @@ class Regex:
                     min = tmpmin
                 max = max + tmpmax
 
+            if 'optional' in m:
+                regex = '(' + regex + ')?'
+
             if (sLenght > self.maxLength or (sLenght > 1 and len(filters) > sLenght/2)):
                 if 'minL' in m:
                     regex = '.'+'{'+str(min)+','+str(sLenght)+'}'
@@ -128,8 +132,14 @@ class Regex:
                     regex = '.'+'{'+str(sLenght)+'}'
 
         if 'hc' in m:
-            regex = regex + m['hc']
+            if 'optional' in m:
+                regex = regex + '('+m['hc']+')?'
+            elif 'mutual' in m:
+                regex = regex + '('+m['hc']+')'
+            else:
+                regex = regex + m['hc']
             max = len(m['hc'])
+
 
         return regex,min,max
 
@@ -149,9 +159,18 @@ class Regex:
 
         if 'optional' in f:
             max = f['repetitions']
-        #"""
+
+        if 'optional' in f:
+            tmpregex = '(' + tmpregex  + ')?'
+            #optional = True
+        """
         if 'optional' in f and optional == False:
-            tmpregex = '(' + tmpregex + ')?'
+            tmpregex = '(' + tmpregex # + ')?'
+            optional = True
+        if not 'optional' in f and optional == True:
+            #tmpregex = ')?' + tmpregex # +
+            optional = False
+
         # """
 
         regex = regex + tmpregex
@@ -224,10 +243,19 @@ class Regex:
 
         return offset
 
+    def basicFilter(self,filter):
+        if filter == 'a-z':
+            return True
+        if filter == 'A-A':
+            return True
+        if filter == '0-9':
+            return True
+        return False
+
     def mergeFilter(self, filter1, filter2):
         if filter1 == filter2:
             f = filter1
-        elif filter1 in filter2:
+        elif filter1 in filter2 and not self.basicFilter(filter2):
             f = filter2
         else:
             f = filter1 + filter2
