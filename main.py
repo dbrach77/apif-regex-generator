@@ -8,10 +8,10 @@ import regex
 rgx = regex.Regex()
 rgx.maxLength = 36
 fileName = sys.argv[1]
-print(sys.argv[1])
+#print(sys.argv[1])
 if (len(sys.argv) == 3):
     rgx.util.parameters = sys.argv[2]
-    print(sys.argv[2])
+    #print(sys.argv[2])
 #rgx.util.parameters = ''
 
 lineList = [line.rstrip('\n') for line in open(fileName)]
@@ -26,18 +26,18 @@ for i in range(len(lineList)):
         mergeMap = inputMap
     else:
         mergeMap = rgx.merge(inputMap, mergeMap)
-print(mergeMap)
+#print(mergeMap)
 
 def matchRegex():
     global regex, mandatory, optional, i
-    print('MERGE NO EURISTICS')
+    #print('MERGE NO EURISTICS')
     rgx.util.forced = True
     #print(mergeMap)
     regex, mandatory, optional = rgx.regex(mergeMap)
-    print(str(mandatory))
-    print(str(optional))
-    #regex = '[0-9]{3}(-|\.)[0-9]{3}(-|\.)[0-9]{4}( )?([a-z][0-9]{3})?'
-    print(regex)
+    #print(str(mandatory))
+    #print(str(optional))
+    #regex = '[a-z]{5,6}([\.][a-z]{5,7})?@[a-z]{5,11}[\.][a-z]{2,3}'
+    print("True expression: "+ regex)
     regex = '^' + regex + '$'
     matches = 0
     # print('************** Matches')
@@ -48,7 +48,7 @@ def matchRegex():
             matches = matches + 1
             # print(match)
     if matches == len(lineList):
-        print('************** ALL Matches')
+        pass #print('************** ALL Matches')
     else:
         print('************** NOT Matches')
         for i in range(len(lineList)):
@@ -60,14 +60,14 @@ def matchRegex():
 
 def matchEuristicRegex():
     global regex, mandatory, optional, i
-    print('MERGE WITH EURISTICS')
+    #print('MERGE WITH EURISTICS')
     rgx.util.forced = False
     # print(mergeMap)
     regex, mandatory, optional = rgx.regex(mergeMap)
-    print(str(mandatory))
-    print(str(optional))
+    print("Mandatory Groups: "+str(mandatory))
+    print("Optionl Groups: "+str(optional))
     # regex = '[a-z]{11}[.][0-9]{3}'
-    print(regex)
+    print("Final expression: " + regex)
     regex = '^' + regex + '$'
     matches = 0
     # print('************** Matches')
@@ -78,7 +78,7 @@ def matchEuristicRegex():
             matches = matches + 1
             # print(match)
     if matches == len(lineList):
-        print('************** ALL Matches')
+        pass #print('************** ALL Matches')
     else:
         print('************** NOT Matches')
         for i in range(len(lineList)):
