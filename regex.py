@@ -278,10 +278,10 @@ class Regex:
         hc2 = m2['hc']
         if hc1 == hc2:
             hardcode = {'hc': hc1}
-        elif hc1 in hc2:
+        elif hc1 in hc2 and '|' in hc2:
             hardcode = {'hc': hc2}
             self.util.makeMutual(hardcode)
-        elif hc2 in hc1:
+        elif hc2 in hc1 and '|' in hc1:
             hardcode = {'hc': hc1}
             self.util.makeMutual(hardcode)
         else:

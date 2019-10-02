@@ -18,35 +18,27 @@ lineList = [line.rstrip('\n') for line in open(fileName)]
 
 #print('INPUT')
 for i in range(len(lineList)):
-    #print(lineList[i])
     inputMap = rgx.regexStructure(lineList[i])
-    #print(inputMap)
-    #print(util.regex(inputMap))
     if i == 0:
         mergeMap = inputMap
     else:
         mergeMap = rgx.merge(inputMap, mergeMap)
-#print(mergeMap)
+
 
 def matchRegex():
     global regex, mandatory, optional, i
-    #print('MERGE NO EURISTICS')
     rgx.util.forced = True
-    #print(mergeMap)
     regex, mandatory, optional = rgx.regex(mergeMap)
-    #print(str(mandatory))
-    #print(str(optional))
     #regex = '[a-z]{5,6}([\.][a-z]{5,7})?@[a-z]{5,11}[\.][a-z]{2,3}'
     print("True expression: "+ regex)
     regex = '^' + regex + '$'
     matches = 0
-    # print('************** Matches')
     for i in range(len(lineList)):
         p = re.compile(regex)
         match = p.match(lineList[i])
         if (match != None and match.string == lineList[i]):
             matches = matches + 1
-            # print(match)
+
     if matches == len(lineList):
         pass #print('************** ALL Matches')
     else:
@@ -60,13 +52,12 @@ def matchRegex():
 
 def matchEuristicRegex():
     global regex, mandatory, optional, i
-    #print('MERGE WITH EURISTICS')
     rgx.util.forced = False
-    # print(mergeMap)
+    #print(mergeMap)
     regex, mandatory, optional = rgx.regex(mergeMap)
     print("Mandatory Groups: "+str(mandatory))
     print("Optionl Groups: "+str(optional))
-    # regex = '[a-z]{11}[.][0-9]{3}'
+    #regex = '[A-Z][a-z]{3,10}(, | )[A-Z][a-z]{4,8}(, | )?([A-Z][a-z]{7,12})?'
     print("Final expression: " + regex)
     regex = '^' + regex + '$'
     matches = 0
@@ -88,7 +79,7 @@ def matchEuristicRegex():
                 print(lineList[i])
 
 
-matchRegex()
+#matchRegex()
 matchEuristicRegex()
 
 
