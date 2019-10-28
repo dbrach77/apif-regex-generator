@@ -17,12 +17,15 @@ if (len(sys.argv) == 3):
 lineList = [line.rstrip('\n') for line in open(fileName)]
 
 #print('INPUT')
+
 for i in range(len(lineList)):
     inputMap = rgx.regexStructure(lineList[i])
     if i == 0:
         mergeMap = inputMap
     else:
         mergeMap = rgx.merge(inputMap, mergeMap)
+
+print(mergeMap)
 
 
 def matchRegex():
@@ -79,7 +82,7 @@ def matchEuristicRegex():
                 print(lineList[i])
 
 
-#matchRegex()
+matchRegex()
 matchEuristicRegex()
 
 

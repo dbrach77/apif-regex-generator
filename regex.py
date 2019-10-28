@@ -6,48 +6,51 @@ class Regex:
     maxLength = 36
     parameters = ''
 
-    def regexStructure(self, s):
-            temp = ''
+    def regexStructure(self, source):
+            filter = ''
             hc = ''
             filters = []
-            self.util.hardcoded(s)
+            self.util.hardcoded(source)
             ishc = self.util.isHardCode
-            l=0
+            index=0
             if  ishc == True:
-                for n in s:
-                    l = l + 1
+                for c in source:
+                    index = index + 1
                     #se ho finito la stringa o è un carattere hc e hc è vuoto vuolte dire che devo appendere un gruppo filtro
-                    if l == len(s) or self.util.hcChar(n) and hc == '':
-                        self.endOfString(filters, hc, l, n, s, temp)
-                        temp = ''
-                        hc = n
+                    if index == len(source) or self.util.hcChar(c) and hc == '':
+                        self.endOfString(filters, hc, index, c, source, filter)
+                        filter = ''
+                        hc = c
                     #se hc non è vuoto e ho ancora carattere hc allungo hc
-                    elif hc != '' and self.util.hcChar(n):
-                        hc = hc + n
+                    elif hc != '' and self.util.hcChar(c):
+                        hc = hc + c
                     #se hc non è vuoto e
-                    elif hc != '' and (l == len(s) or not self.util.hcChar(n)):
+                    elif hc != '' and (index == len(source) or not self.util.hcChar(c)):
                         filters.append({'hc': self.util.escapeHc(hc)})
                         hc = ''
-                        temp = temp + n
+                        filter = filter + c
                     else:
-                        temp = temp + n
+                        filter = filter + c
             else:
-                filters.append(self.singleGroupStructure(s))
+                filters.append(self.singleGroupStructure(source))
 
+            filters.append({'sourceMin':len(source)})
+            filters.append({'sourceMax':len(source)})
             return filters
 
-    def endOfString(self, filters, hc, l, n, s, temp):
+    def endOfString(self, filters, hc, index, c, source, filter):
         # fine stringa e hc valorizzato allora devo inserire un gruppo hc prima dell'ultimo gruppo filtro
-        if l == len(s) and hc != '':
+        if index == len(source) and hc != '':
             filters.append({'hc': self.util.escapeHc(hc)})
         # fine stringa e carattere alfanumerico allora accodo a temp l'ultimo carattere al gruppo filtro
-        if l == len(s) and not self.util.hcChar(n):
-            temp = temp + n
+        if index == len(source) and not self.util.hcChar(c):
+            filter = filter + c
         # appendo il guppo filtro
-        filters.append(self.singleGroupStructure(temp))
+        filters.append(self.singleGroupStructure(filter))
         # fine striga e carattere hc allora accodo l'ultimo gruppo hc dopo l'ultimo gruppo filtro
-        if l == len(s) and self.util.hcChar(n):
-            filters.append({'hc': self.util.escapeHc(n)})
+        if index == len(source) and self.util.hcChar(c):
+            filters.append({'hc': self.util.escapeHc(c)})
+
 
     def singleGroupStructure(self, s):
         filter = ''
@@ -77,40 +80,30 @@ class Regex:
         regex =''
         i = 0
         optional = False
-        mutual = False
-        hardcoded = False
-        optionalCount = 0
         mandatory = 0
         min = 0
         max = 0
 
         for m in s:
+           if ('sourceMin' in m): min = m['sourceMin']
+           if ('sourceMax' in m): max = m['sourceMax']
+
+        for m in s:
             i = i +1
             #mutual, optional, regex = self.util.preRegex(i, m, mutual, optional, regex, s)
-            temp,tmpmin,tmpmax = self.singleGroupRegex(m,optional)
+            temp,tmpmin,tmpmax = self.singleGroupRegex(m,optional,min,max)
             regex = regex + temp
             #regex = self.util.postRegex(i, mutual, optional, regex, s)
             #if min == 0 or tmpmin < min:
-            min = tmpmin
-            max = max + tmpmax
+            #min = tmpmin
+            #max = max + tmpmax
 
-        for m in s:
-            if 's' in m:
-                filters = m['filters']
-                for f in filters:
-                    if 'hc' in f:
-                        hardcoded = True
-            if 'hc' in m:
-                hardcoded = True
-        optionalCount = 0
         mandatory, optionalCount, regex = self.util.checkSingleGroup(m, mandatory, regex, s, min, max)
         return regex,mandatory,optionalCount
 
     #get the regex from the list of filters
-    def singleGroupRegex(self, m, optional):
+    def singleGroupRegex(self, m, optional,min,max):
         regex = ''
-        min = 0
-        max = 0
 
         if 's' in m:
             s = m['s']
@@ -118,18 +111,23 @@ class Regex:
             filters = m['filters']
             for f in filters:
                 regex,tmpmin,tmpmax = self.singleFilterRegex(f, optional, regex)
+                """
                 if min == 0 or tmpmin < min:
                     min = tmpmin
                 max = max + tmpmax
+                """
 
             if 'optional' in m:
                 regex = '(' + regex + ')?'
+            if ('sourceMin' in m): min = m['sourceMin']
+            if ('sourceMax' in m): max = m['sourceMax']
 
             if (sLenght > self.maxLength or (sLenght > 1 and len(filters) > sLenght/2)):
-                if 'minL' in m:
+                regex = '.'+'{'+str(min)+','+str(max)+'}'
+                """if 'minL' in m:
                     regex = '.'+'{'+str(min)+','+str(sLenght)+'}'
                 else:
-                    regex = '.'+'{'+str(sLenght)+'}'
+                    regex = '.'+'{'+str(sLenght)+'}'"""
 
         if 'hc' in m:
             if 'optional' in m:
@@ -177,9 +175,44 @@ class Regex:
         return regex,min,max
 
     def merge(self, struct1, struct2):
+        sourceMin = 0
+        sourceMax = 0
+        sourceMin1 = 0
+        sourceMax1 = 0
+        sourceMin2 = 0
+        sourceMax2 = 0
         minLength = 0
         filters = []
         merge = []
+
+        for m in struct1:
+            if ('sourceMin' in m): sourceMin1 = m['sourceMin']
+            if ('sourceMax' in m): sourceMax1 = m['sourceMax']
+
+        for m in struct2:
+            if ('sourceMin' in m): sourceMin2 = m['sourceMin']
+            if ('sourceMax' in m): sourceMax2 = m['sourceMax']
+
+        for m in struct1:
+            if ('sourceMin' in m): struct1.remove(m)
+        for m in struct1:
+            if ('sourceMax' in m): struct1.remove(m)
+
+        for m in struct2:
+            if ('sourceMin' in m): struct2.remove(m)
+        for m in struct2:
+            if ('sourceMax' in m): struct2.remove(m)
+
+        if (sourceMin1 < sourceMin2):
+            sourceMin = sourceMin1
+        else:
+            sourceMin = sourceMin2
+
+        if (sourceMax1 > sourceMax2):
+            sourceMax = sourceMax1
+        else:
+            sourceMax = sourceMax2
+
         lengthDifference, minLength, longestStruct = self.util.longestMinDifference(struct1, struct2)
 
         offset = 0
@@ -205,6 +238,8 @@ class Regex:
                 self.util.makeOptional(hardcode)
                 merge.append(hardcode)
 
+        merge.append({'sourceMin':sourceMin})
+        merge.append({'sourceMax':sourceMax})
         return merge
 
     def mergeFilters(self, filters, m1, m2, merge):
