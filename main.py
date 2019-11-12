@@ -4,7 +4,7 @@ import sys
 import utils
 import regex
 
-
+print("REGEX")
 rgx = regex.Regex()
 rgx.maxLength = 36
 fileName = sys.argv[1]

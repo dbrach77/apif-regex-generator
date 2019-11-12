@@ -34,6 +34,7 @@ class Regex:
             else:
                 filters.append(self.singleGroupStructure(source))
 
+            #aggiungo la lunghezza minima e massima delle stringhe in esame
             filters.append({'sourceMin':len(source)})
             filters.append({'sourceMax':len(source)})
             return filters
@@ -90,13 +91,8 @@ class Regex:
 
         for m in s:
             i = i +1
-            #mutual, optional, regex = self.util.preRegex(i, m, mutual, optional, regex, s)
             temp,tmpmin,tmpmax = self.singleGroupRegex(m,optional,min,max)
             regex = regex + temp
-            #regex = self.util.postRegex(i, mutual, optional, regex, s)
-            #if min == 0 or tmpmin < min:
-            #min = tmpmin
-            #max = max + tmpmax
 
         mandatory, optionalCount, regex = self.util.checkSingleGroup(m, mandatory, regex, s, min, max)
         return regex,mandatory,optionalCount
@@ -111,23 +107,18 @@ class Regex:
             filters = m['filters']
             for f in filters:
                 regex,tmpmin,tmpmax = self.singleFilterRegex(f, optional, regex)
-                """
-                if min == 0 or tmpmin < min:
-                    min = tmpmin
-                max = max + tmpmax
-                """
 
             if 'optional' in m:
                 regex = '(' + regex + ')?'
+
             if ('sourceMin' in m): min = m['sourceMin']
             if ('sourceMax' in m): max = m['sourceMax']
 
             if (sLenght > self.maxLength or (sLenght > 1 and len(filters) > sLenght/2)):
-                regex = '.'+'{'+str(min)+','+str(max)+'}'
-                """if 'minL' in m:
-                    regex = '.'+'{'+str(min)+','+str(sLenght)+'}'
+                if (min == max):
+                    regex = '.'+'{'+str(max)+'}'
                 else:
-                    regex = '.'+'{'+str(sLenght)+'}'"""
+                    regex = '.'+'{'+str(min)+','+str(max)+'}'
 
         if 'hc' in m:
             if 'optional' in m:
@@ -160,44 +151,32 @@ class Regex:
 
         if 'optional' in f:
             tmpregex = '(' + tmpregex  + ')?'
-            #optional = True
-        """
-        if 'optional' in f and optional == False:
-            tmpregex = '(' + tmpregex # + ')?'
-            optional = True
-        if not 'optional' in f and optional == True:
-            #tmpregex = ')?' + tmpregex # +
-            optional = False
-
-        # """
 
         regex = regex + tmpregex
         return regex,min,max
 
     def merge(self, struct1, struct2):
-        sourceMin = 0
-        sourceMax = 0
         sourceMin1 = 0
         sourceMax1 = 0
         sourceMin2 = 0
         sourceMax2 = 0
-        minLength = 0
         filters = []
         merge = []
 
+        #max and min from structure 1
         for m in struct1:
             if ('sourceMin' in m): sourceMin1 = m['sourceMin']
             if ('sourceMax' in m): sourceMax1 = m['sourceMax']
-
+        #max and min from structure 2
         for m in struct2:
             if ('sourceMin' in m): sourceMin2 = m['sourceMin']
             if ('sourceMax' in m): sourceMax2 = m['sourceMax']
-
+        #cleaning structure 1 form navigation purposes
         for m in struct1:
             if ('sourceMin' in m): struct1.remove(m)
         for m in struct1:
             if ('sourceMax' in m): struct1.remove(m)
-
+        #cleaning structure 2 form navigation purposes
         for m in struct2:
             if ('sourceMin' in m): struct2.remove(m)
         for m in struct2:
@@ -242,6 +221,7 @@ class Regex:
         merge.append({'sourceMax':sourceMax})
         return merge
 
+    #filters merge
     def mergeFilters(self, filters, m1, m2, merge):
         maxS, maxL, minS, minL = self.util.longestString(m1, m2)
         filtersGroup1 = m1['filters']
@@ -264,6 +244,7 @@ class Regex:
 
         merge.append(struct)
 
+    #mergin single group
     def mergeSingleGroup(self, filters, filtersGroup1, filtersGroup2, j, offset):
         filter1, filter2, group1, group2, maxRepetitions2, minRepetitions2, offset, repetitions1, repetitions2 = self.initSingleGroupMerge(filtersGroup1, filtersGroup2, j, offset)
         f = self.mergeFilter(filter1, filter2)
