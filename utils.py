@@ -66,10 +66,11 @@ class Utils:
             #    mandatory = mandatory + 1
 
         if self.forced == False and optionalCount > mandatory:
-            if min >= 0:
-                regex = '.' + '{' + str(min) + ',' + str(max) + '}'
-            else:
+            if min == max:
                 regex = '.' + '{' + str(max) + '}'
+            else:
+                regex = '.' + '{' + str(min) + ',' + str(max) + '}'
+
         return mandatory, optionalCount, regex
 
     def postRegex(self, i, mutual, optional, regex, s):
