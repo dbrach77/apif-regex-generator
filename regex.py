@@ -74,10 +74,10 @@ class Regex:
             if l == len(s):
                 filters.append(f)
 
-        struct = {'s':s,'l':len(s),'filters':filters}
+        struct = {'s':s,'maxL':len(s),'filters':filters}
         return struct
 
-    def regex(self, s):
+    def regex(self, s):        
         regex =''
         i = 0
         optional = False
@@ -103,8 +103,10 @@ class Regex:
 
         if 's' in m:
             s = m['s']
-            sLenght =  m['l']
+            sLenght =  m['maxL']
+            minLenght = m['minL']
             filters = m['filters']
+
             for f in filters:
                 regex,tmpmin,tmpmax = self.singleFilterRegex(f, optional, regex)
 
@@ -115,10 +117,16 @@ class Regex:
             if ('sourceMax' in m): max = m['sourceMax']
 
             if (sLenght > self.maxLength or (sLenght > 1 and len(filters) > sLenght/2)):
-                if (min == max):
-                    regex = '.'+'{'+str(max)+'}'
+                if (self.util.isHardCode == True):
+                    if (sLenght == minLenght):
+                        regex = '.'+'{'+str(sLenght)+'}'
+                    else:
+                        regex = '.'+'{'+str(minLenght)+','+str(sLenght)+'}'
                 else:
-                    regex = '.'+'{'+str(min)+','+str(max)+'}'
+                    if (min == max):
+                        regex = '.'+'{'+str(max)+'}'
+                    else:
+                        regex = '.'+'{'+str(min)+','+str(max)+'}'
 
         if 'hc' in m:
             if 'optional' in m:
@@ -237,7 +245,7 @@ class Regex:
             self.util.makeOptional(group)
             filters.append(group)
 
-        struct = {'s': maxS, 'l': maxL, 'minS':minS, 'minL':minL, 'filters': filters}
+        struct = {'s': maxS, 'maxL': maxL, 'minS':minS, 'minL':minL, 'filters': filters}
 
         if 'optional' in m2:
             self.util.makeOptional(struct)
