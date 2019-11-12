@@ -104,7 +104,11 @@ class Regex:
         if 's' in m:
             s = m['s']
             sLenght =  m['maxL']
-            minLenght = m['minL']
+            if 'minL' in m:
+                minLenght = m['minL']
+            else:
+                minLenght = m['maxL']
+
             filters = m['filters']
 
             for f in filters:
